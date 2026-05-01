@@ -1,0 +1,32 @@
+.DS_Store
+Thumbs.db
+
+# Android / Gradle
+.gradle/
+local.properties
+**/build/
+captures/
+.idea/
+*.iml
+
+# Node / TypeScript
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logs / temp
+*.log
+tmp/
+temp/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS/editor
+.vscode/
+
+# Large or local test artifacts
+test_huge.bmp
