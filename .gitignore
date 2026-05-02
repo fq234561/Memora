@@ -17,6 +17,7 @@ coverage/
 
 # Logs / temp
 *.log
+*.err
 tmp/
 temp/
 
@@ -30,3 +31,5 @@ temp/
 
 # Large or local test artifacts
 test_huge.bmp
+backend/test_img.jpg
+backend/uploads/

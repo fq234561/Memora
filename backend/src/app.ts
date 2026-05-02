@@ -12,6 +12,7 @@ import projectRoutes from './routes/projects';
 import purchaseRoutes from './routes/purchases';
 import contactRoutes from './routes/contact';
 import healthRoutes from './routes/health';
+import promptRoutes from './routes/prompts';
 
 export function createApp(): Application {
   const app = express();
@@ -39,6 +40,7 @@ export function createApp(): Application {
   app.use('/api/purchases', purchaseRoutes);
   app.use('/api/contact', contactRoutes);
   app.use('/api/health', healthRoutes);
+  app.use('/api/prompts', promptRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {

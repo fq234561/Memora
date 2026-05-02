@@ -15,6 +15,7 @@ import com.memorial.app.ui.home.HomeScreen
 import com.memorial.app.ui.login.LoginScreen
 import com.memorial.app.ui.preview.PreviewScreen
 import com.memorial.app.ui.purchase.PurchaseScreen
+import com.memorial.app.data.model.ProjectStatus
 import com.memorial.app.ui.settings.SettingsScreen
 import com.memorial.app.ui.style.StyleSelectionScreen
 import com.memorial.app.ui.upload.UploadPhotosScreen
@@ -43,8 +44,22 @@ fun AppNavigation(
                 onCreateProject = {
                     navController.navigate(Screen.CreateProject.route)
                 },
-                onOpenProject = { projectId ->
-                    navController.navigate(Screen.UploadPhotos.createRoute(projectId))
+                onOpenProject = { projectId, status ->
+                    when (status) {
+                        ProjectStatus.DRAFT ->
+                            navController.navigate(Screen.UploadPhotos.createRoute(projectId))
+                        ProjectStatus.UPLOADED,
+                        ProjectStatus.GENERATING,
+                        ProjectStatus.PREVIEW_READY,
+                        ProjectStatus.FAILED ->
+                            navController.navigate(Screen.Preview.createRoute(projectId))
+                        ProjectStatus.PURCHASED ->
+                            navController.navigate(Screen.Purchase.createRoute(projectId))
+                        ProjectStatus.COMPLETED ->
+                            navController.navigate(Screen.Download.createRoute(projectId))
+                        else ->
+                            navController.navigate(Screen.UploadPhotos.createRoute(projectId))
+                    }
                 },
                 onOpenSettings = {
                     navController.navigate(Screen.Settings.route)

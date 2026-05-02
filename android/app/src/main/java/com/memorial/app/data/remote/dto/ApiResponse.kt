@@ -73,6 +73,40 @@ data class UploadResponse(
     @SerializedName("fileName") val fileName: String
 )
 
+data class PurchaseDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("projectId") val projectId: String,
+    @SerializedName("userId") val userId: String,
+    @SerializedName("productId") val productId: String,
+    @SerializedName("purchaseToken") val purchaseToken: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("verifiedAt") val verifiedAt: String? = null,
+    @SerializedName("createdAt") val createdAt: String
+)
+
+data class PromptOptimizeRequest(
+    @SerializedName("userDescription") val userDescription: String? = null,
+    @SerializedName("relationship") val relationship: String,
+    @SerializedName("photoType") val photoType: String,
+    @SerializedName("style") val style: String,
+    @SerializedName("mood") val mood: String? = null,
+    @SerializedName("compositionPrefs") val compositionPrefs: String? = null
+)
+
+data class OptimizedPromptResult(
+    @SerializedName("optimizedPrompt") val optimizedPrompt: String,
+    @SerializedName("negativePrompt") val negativePrompt: String,
+    @SerializedName("stylePrompt") val stylePrompt: String,
+    @SerializedName("safetyNotes") val safetyNotes: List<String>,
+    @SerializedName("modelParams") val modelParams: ModelParams
+)
+
+data class ModelParams(
+    @SerializedName("size") val size: String? = null,
+    @SerializedName("quality") val quality: String? = null,
+    @SerializedName("style") val style: String? = null
+)
+
 data class ContactRequest(
     @SerializedName("type") val type: String,
     @SerializedName("email") val email: String,

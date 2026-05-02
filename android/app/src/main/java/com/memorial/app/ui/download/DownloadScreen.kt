@@ -1,5 +1,6 @@
 package com.memorial.app.ui.download
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -19,10 +21,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -44,9 +48,26 @@ fun DownloadScreen(
         }
     )
 ) {
+    val context = LocalContext.current
     val photoUrl by viewModel.photoUrl.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val saveState by viewModel.saveState.collectAsState()
+
+    LaunchedEffect(saveState) {
+        when (saveState) {
+            is DownloadViewModel.SaveState.Success -> {
+                Toast.makeText(context, "Photo saved to gallery", Toast.LENGTH_SHORT).show()
+                viewModel.clearSaveState()
+            }
+            is DownloadViewModel.SaveState.Error -> {
+                val msg = (saveState as DownloadViewModel.SaveState.Error).message
+                Toast.makeText(context, "Save failed: $msg", Toast.LENGTH_LONG).show()
+                viewModel.clearSaveState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -89,6 +110,10 @@ fun DownloadScreen(
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.retryLoad() }) {
+                        Text("Retry")
+                    }
                 }
 
                 else -> {
@@ -121,10 +146,25 @@ fun DownloadScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { /* TODO: Implement actual download */ },
-                        modifier = Modifier.fillMaxWidth()
+                        onClick = {
+                            photoUrl?.let { url ->
+                                viewModel.downloadAndSavePhoto(context, url)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = saveState !is DownloadViewModel.SaveState.Saving && photoUrl != null
                     ) {
-                        Text("Download Photo")
+                        if (saveState is DownloadViewModel.SaveState.Saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text("Saving...")
+                        } else {
+                            Text("Download Photo")
+                        }
                     }
 
                     Button(

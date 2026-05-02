@@ -96,19 +96,9 @@ fun UploadPhotosScreen(
         }
     }
 
-    // Dev auto-fill: automatically select test photos and upload on first launch
+    // Dev auto-fill: automatically trigger upload if mock URIs are pre-filled
     LaunchedEffect(Unit) {
-        if (deceasedPhotoUri == null && livingPhotoUri == null) {
-            // Pass null context to skip validation in dev mode
-            viewModel.onDeceasedPhotoSelected(
-                android.net.Uri.parse("content://media/external/images/media/1000000050"),
-                null
-            )
-            viewModel.onLivingPhotoSelected(
-                android.net.Uri.parse("content://media/external/images/media/1000000051"),
-                null
-            )
-            // Auto-trigger upload after a short delay
+        if (deceasedPhotoUri != null && livingPhotoUri != null && !uploadSuccess) {
             kotlinx.coroutines.delay(500)
             viewModel.uploadPhotos(context)
         }

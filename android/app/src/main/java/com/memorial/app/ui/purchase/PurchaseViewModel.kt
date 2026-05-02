@@ -37,33 +37,55 @@ class PurchaseViewModel(
             _isPurchasing.value = true
             _errorMessage.value = null
 
-            // For MVP Phase 5: Mock purchase token
-            // In production, this comes from Google Play Billing Library
             val mockPurchaseToken = "mock_purchase_token_${System.currentTimeMillis()}"
             val mockProductId = when (product) {
                 ProductOption.HD_PHOTO -> "hd_photo"
                 ProductOption.PHOTO_AND_VIDEO -> "photo_and_video"
             }
 
-            // Create purchase record on backend
-            val result = runCatching {
-                // Note: Backend purchase/verify endpoints accept PurchaseRequest
-                // For mock flow, we simulate a successful verification
-                kotlinx.coroutines.delay(1500)
+            // Step 1: Create purchase record on backend
+            val createResult = repository.createPurchase(projectId, mockProductId, mockPurchaseToken)
+            if (createResult.isFailure) {
+                _errorMessage.value = formatError(createResult.exceptionOrNull())
+                _isPurchasing.value = false
+                return@launch
             }
 
-            if (result.isSuccess) {
-                _purchaseComplete.value = true
-            } else {
-                _errorMessage.value = result.exceptionOrNull()?.message ?: "Purchase failed"
+            val purchaseId = createResult.getOrNull()?.id ?: run {
+                _errorMessage.value = "Purchase created but no ID returned"
+                _isPurchasing.value = false
+                return@launch
             }
 
+            // Step 2: Verify purchase (mock Google Play verification)
+            val verifyResult = repository.verifyPurchase(purchaseId)
+            if (verifyResult.isFailure) {
+                _errorMessage.value = formatError(verifyResult.exceptionOrNull())
+                _isPurchasing.value = false
+                return@launch
+            }
+
+            _purchaseComplete.value = true
             _isPurchasing.value = false
         }
     }
 
     fun clearError() {
         _errorMessage.value = null
+    }
+
+    private fun formatError(error: Throwable?): String {
+        val msg = error?.message ?: "Unknown error"
+        return when {
+            msg.contains("connect", ignoreCase = true) ||
+            msg.contains("timeout", ignoreCase = true) ||
+            msg.contains("unable to resolve", ignoreCase = true) ||
+            msg.contains("connection", ignoreCase = true) ||
+            msg.contains("refused", ignoreCase = true) ||
+            msg.contains("CLEARTEXT", ignoreCase = true) ->
+                "Service temporarily unavailable. Please try again later."
+            else -> msg
+        }
     }
 
     enum class ProductOption(val title: String, val description: String, val price: String) {

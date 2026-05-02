@@ -43,7 +43,10 @@ interface ApiService {
     ): Response<ApiResponse<UploadResponse>>
 
     @POST("api/projects/{id}/generate")
-    suspend fun generatePhoto(@Path("id") id: String): Response<ApiResponse<ProjectDto>>
+    suspend fun generatePhoto(
+        @Path("id") id: String,
+        @Body request: Map<String, String>? = null
+    ): Response<ApiResponse<ProjectDto>>
 
     @GET("api/projects/{id}/status")
     suspend fun getStatus(@Path("id") id: String): Response<ApiResponse<StatusResponse>>
@@ -56,10 +59,14 @@ interface ApiService {
 
     // Purchases
     @POST("api/purchases")
-    suspend fun createPurchase(@Body request: PurchaseRequest): Response<ApiResponse<Unit>>
+    suspend fun createPurchase(@Body request: PurchaseRequest): Response<ApiResponse<PurchaseDto>>
 
     @POST("api/purchases/verify")
-    suspend fun verifyPurchase(@Body request: Map<String, String>): Response<ApiResponse<Unit>>
+    suspend fun verifyPurchase(@Body request: Map<String, String>): Response<ApiResponse<PurchaseDto>>
+
+    // Prompts
+    @POST("api/prompts/optimize")
+    suspend fun optimizePrompt(@Body request: PromptOptimizeRequest): Response<ApiResponse<OptimizedPromptResult>>
 
     // Contact
     @POST("api/contact")

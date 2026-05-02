@@ -112,15 +112,16 @@ class ProjectRepository {
         }
     }
 
-    suspend fun generatePhoto(projectId: String): Result<ProjectDto> = withContext(Dispatchers.IO) {
+    suspend fun generatePhoto(projectId: String, customPrompt: String? = null): Result<ProjectDto> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitClient.apiService.generatePhoto(projectId)
+            val body = if (customPrompt != null) mapOf("customPrompt" to customPrompt) else null
+            val response = RetrofitClient.apiService.generatePhoto(projectId, body)
             if (response.isSuccessful) {
-                val body = response.body()
-                if (body?.success == true && body.data != null) {
-                    Result.success(body.data)
+                val respBody = response.body()
+                if (respBody?.success == true && respBody.data != null) {
+                    Result.success(respBody.data)
                 } else {
-                    Result.failure(Exception(body?.error ?: "Failed to start generation"))
+                    Result.failure(Exception(respBody?.error ?: "Failed to start generation"))
                 }
             } else {
                 Result.failure(Exception("Failed to start generation: ${response.code()}"))
@@ -173,6 +174,64 @@ class ProjectRepository {
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to delete project: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createPurchase(projectId: String, productId: String, purchaseToken: String): Result<com.memorial.app.data.remote.dto.PurchaseDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = RetrofitClient.apiService.createPurchase(
+                com.memorial.app.data.remote.dto.PurchaseRequest(projectId, productId, purchaseToken)
+            )
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body?.success == true && body.data != null) {
+                    Result.success(body.data)
+                } else {
+                    Result.failure(Exception(body?.error ?: "Failed to create purchase"))
+                }
+            } else {
+                Result.failure(Exception("Failed to create purchase: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun verifyPurchase(purchaseId: String): Result<com.memorial.app.data.remote.dto.PurchaseDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = RetrofitClient.apiService.verifyPurchase(
+                mapOf("purchaseId" to purchaseId)
+            )
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body?.success == true && body.data != null) {
+                    Result.success(body.data)
+                } else {
+                    Result.failure(Exception(body?.error ?: "Failed to verify purchase"))
+                }
+            } else {
+                Result.failure(Exception("Failed to verify purchase: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun optimizePrompt(request: com.memorial.app.data.remote.dto.PromptOptimizeRequest): Result<com.memorial.app.data.remote.dto.OptimizedPromptResult> = withContext(Dispatchers.IO) {
+        try {
+            val response = RetrofitClient.apiService.optimizePrompt(request)
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body?.success == true && body.data != null) {
+                    Result.success(body.data)
+                } else {
+                    Result.failure(Exception(body?.error ?: "Failed to optimize prompt"))
+                }
+            } else {
+                Result.failure(Exception("Failed to optimize prompt: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

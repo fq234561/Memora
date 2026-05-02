@@ -2,6 +2,7 @@ package com.memorial.app.ui.preview
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.memorial.app.data.remote.dto.PromptOptimizeRequest
 import com.memorial.app.data.remote.dto.StatusResponse
 import com.memorial.app.data.repository.ProjectRepository
 import kotlinx.coroutines.delay
@@ -39,9 +40,52 @@ class PreviewViewModel(
     private fun startGeneration() {
         viewModelScope.launch {
             _uiState.value = PreviewUiState.Loading
-            val result = repository.generatePhoto(projectId)
+            _errorMessage.value = null
+
+            // Check current project status first to avoid re-triggering
+            val projectResult = repository.getProject(projectId)
+            if (projectResult.isSuccess) {
+                val project = projectResult.getOrNull()
+                when (project?.status) {
+                    "PREVIEW_READY", "COMPLETED" -> {
+                        _resultUrl.value = project.generatedPhotoUrl
+                        _uiState.value = PreviewUiState.Success(project.generatedPhotoUrl)
+                        return@launch
+                    }
+                    "GENERATING" -> {
+                        _uiState.value = PreviewUiState.Generating(0)
+                        startPolling()
+                        return@launch
+                    }
+                    else -> { /* continue to trigger generation */ }
+                }
+            } else {
+                _errorMessage.value = formatError(projectResult.exceptionOrNull())
+                _uiState.value = PreviewUiState.Error
+                return@launch
+            }
+
+            // Build and optimize prompt using project style
+            val project = projectResult.getOrNull()
+            val style = project?.style ?: "NATURAL_FAMILY"
+            val photoType = style.lowercase()
+            val optimizeRequest = PromptOptimizeRequest(
+                relationship = "other",
+                photoType = photoType,
+                style = style,
+                mood = "warm"
+            )
+
+            val optimizeResult = repository.optimizePrompt(optimizeRequest)
+            val customPrompt = if (optimizeResult.isSuccess) {
+                optimizeResult.getOrNull()?.optimizedPrompt
+            } else {
+                null // Fall back to default generation if optimization fails
+            }
+
+            val result = repository.generatePhoto(projectId, customPrompt)
             if (result.isFailure) {
-                _errorMessage.value = result.exceptionOrNull()?.message ?: "Failed to start generation"
+                _errorMessage.value = formatError(result.exceptionOrNull())
                 _uiState.value = PreviewUiState.Error
                 return@launch
             }
@@ -70,8 +114,26 @@ class PreviewViewModel(
                     // Stop polling if terminal state reached
                     if (statusData?.status == "PREVIEW_READY" || statusData?.status == "FAILED") {
                         isPolling = false
+                        return@launch
                     }
+                } else {
+                    // Network/backend error during polling
+                    val errorMsg = formatError(result.exceptionOrNull())
+                    if (errorMsg.contains("Service temporarily unavailable")) {
+                        _errorMessage.value = errorMsg
+                        _uiState.value = PreviewUiState.Error
+                        isPolling = false
+                        return@launch
+                    }
+                    // For other errors, keep polling but log it
                 }
+            }
+
+            // Timeout: max attempts reached without terminal state
+            if (isPolling) {
+                isPolling = false
+                _errorMessage.value = "Generation is taking longer than expected. Please check back later."
+                _uiState.value = PreviewUiState.Error
             }
         }
     }
@@ -111,6 +173,20 @@ class PreviewViewModel(
     override fun onCleared() {
         super.onCleared()
         isPolling = false
+    }
+
+    private fun formatError(error: Throwable?): String {
+        val msg = error?.message ?: "Unknown error"
+        return when {
+            msg.contains("connect", ignoreCase = true) ||
+            msg.contains("timeout", ignoreCase = true) ||
+            msg.contains("unable to resolve", ignoreCase = true) ||
+            msg.contains("connection", ignoreCase = true) ||
+            msg.contains("refused", ignoreCase = true) ||
+            msg.contains("CLEARTEXT", ignoreCase = true) ->
+                "Service temporarily unavailable. Please try again later."
+            else -> msg
+        }
     }
 
     sealed class PreviewUiState {

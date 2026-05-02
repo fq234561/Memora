@@ -6,7 +6,9 @@ data class Project(
     val style: PhotoStyle,
     val status: ProjectStatus,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    val generatedPhotoUrl: String? = null,
+    val hdPhotoUrl: String? = null
 )
 
 enum class PhotoStyle {
@@ -19,13 +21,16 @@ enum class PhotoStyle {
 enum class ProjectStatus {
     DRAFT,
     UPLOADED,
+    GENERATING,
     PREVIEW_QUEUED,
     PREVIEW_GENERATING,
     PREVIEW_READY,
     PAYMENT_PENDING,
     PAID,
+    PURCHASED,
     FINAL_GENERATING,
     FINAL_READY,
+    COMPLETED,
     FAILED,
     DELETED
 }

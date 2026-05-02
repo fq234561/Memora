@@ -38,6 +38,9 @@ router.post('/', (req: Request, res: Response) => {
 
   store.createPurchase(purchase);
 
+  // Update project status to indicate purchase is pending
+  store.updateProject(projectId, { status: ProjectStatus.PURCHASED });
+
   const response: ApiResponse<Purchase> = {
     success: true,
     data: purchase,
@@ -64,7 +67,7 @@ router.post('/verify', (req: Request, res: Response) => {
   }
 
   // Mock verification - in production, verify with Google Play Developer API
-  const isValid = purchase.purchaseToken.length > 10;
+  const isValid = purchase.purchaseToken.length >= 3;
 
   if (isValid) {
     store.createPurchase({
@@ -78,7 +81,7 @@ router.post('/verify', (req: Request, res: Response) => {
     if (project) {
       store.updateProject(project.id, {
         status: ProjectStatus.COMPLETED,
-        hdPhotoUrl: `https://mock-storage.example.com/hd/${project.id}_hd.jpg`,
+        hdPhotoUrl: `https://picsum.photos/seed/${project.id}_hd/800/1200`,
       });
     }
   } else {

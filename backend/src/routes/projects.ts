@@ -168,6 +168,7 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
 router.post('/:id/generate', (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
+  const { customPrompt } = req.body as { customPrompt?: string };
 
   const project = store.getProject(id);
   if (!project) {
@@ -180,7 +181,11 @@ router.post('/:id/generate', (req: Request, res: Response) => {
     throw new AppError(400, 'Project not ready for generation');
   }
 
-  store.updateProject(id, { status: ProjectStatus.GENERATING });
+  const updates: Partial<Project> = { status: ProjectStatus.GENERATING };
+  if (customPrompt) {
+    (updates as any).customPrompt = customPrompt;
+  }
+  store.updateProject(id, updates);
 
   // Simulate async generation
   setTimeout(() => {
@@ -188,7 +193,7 @@ router.post('/:id/generate', (req: Request, res: Response) => {
     if (success) {
       store.updateProject(id, {
         status: ProjectStatus.PREVIEW_READY,
-        generatedPhotoUrl: `https://mock-storage.example.com/preview/${id}_watermarked.jpg`,
+        generatedPhotoUrl: `https://picsum.photos/seed/${id}/400/600`,
       });
     } else {
       store.updateProject(id, { status: ProjectStatus.FAILED });

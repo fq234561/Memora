@@ -23,13 +23,9 @@ class UploadPhotosViewModel(
     val livingPhotoUri: StateFlow<Uri?> = _livingPhotoUri
 
     init {
-        // Dev auto-fill: pre-populate with mock URIs and auto-upload
+        // Dev auto-fill: pre-populate with mock URIs for faster testing
         _deceasedPhotoUri.value = android.net.Uri.parse("content://media/external/images/media/1000000050")
         _livingPhotoUri.value = android.net.Uri.parse("content://media/external/images/media/1000000051")
-        viewModelScope.launch {
-            kotlinx.coroutines.delay(1000)
-            _uploadSuccess.value = true
-        }
     }
 
     private val _isUploading = MutableStateFlow(false)
@@ -85,8 +81,22 @@ class UploadPhotosViewModel(
             _isUploading.value = true
             _validationError.value = null
 
-            // Dev mode: skip actual upload and simulate success
-            kotlinx.coroutines.delay(1000)
+            // Upload deceased photo
+            val deceasedResult = repository.uploadPhotoFile(projectId, "deceased", deceasedUri, context)
+            if (deceasedResult.isFailure) {
+                _validationError.value = formatError(deceasedResult.exceptionOrNull())
+                _isUploading.value = false
+                return@launch
+            }
+
+            // Upload living photo
+            val livingResult = repository.uploadPhotoFile(projectId, "living", livingUri, context)
+            if (livingResult.isFailure) {
+                _validationError.value = formatError(livingResult.exceptionOrNull())
+                _isUploading.value = false
+                return@launch
+            }
+
             _uploadSuccess.value = true
             _isUploading.value = false
         }
@@ -143,5 +153,19 @@ class UploadPhotosViewModel(
         }
 
         return null
+    }
+
+    private fun formatError(error: Throwable?): String {
+        val msg = error?.message ?: "Unknown error"
+        return when {
+            msg.contains("connect", ignoreCase = true) ||
+            msg.contains("timeout", ignoreCase = true) ||
+            msg.contains("unable to resolve", ignoreCase = true) ||
+            msg.contains("connection", ignoreCase = true) ||
+            msg.contains("refused", ignoreCase = true) ||
+            msg.contains("CLEARTEXT", ignoreCase = true) ->
+                "Service temporarily unavailable. Please try again later."
+            else -> msg
+        }
     }
 }

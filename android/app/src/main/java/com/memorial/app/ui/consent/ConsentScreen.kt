@@ -21,10 +21,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.memorial.app.data.repository.ProjectRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +40,7 @@ fun ConsentScreen(
     val hasRight by viewModel.hasRightToPhotos.collectAsState()
     val privateUse by viewModel.privateUseOnly.collectAsState()
     val understandAi by viewModel.understandAiGenerated.collectAsState()
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -87,7 +91,13 @@ fun ConsentScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = onConsentGiven,
+                onClick = {
+                    scope.launch {
+                        val repo = ProjectRepository()
+                        repo.giveConsent(projectId)
+                        onConsentGiven()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = hasRight && privateUse && understandAi
             ) {
