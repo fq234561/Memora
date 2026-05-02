@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { ApiResponse, Purchase, PurchaseRequest, PurchaseStatus, ProjectStatus } from '../models/types';
+import { ApiResponse, Purchase, PurchaseRequest, PurchaseStatus, ProjectStatus, Project } from '../models/types';
 import { store } from '../services/mockStore';
 import { AppError } from '../middleware/errorHandler';
 import { mockAuth } from '../middleware/auth';
@@ -18,12 +18,28 @@ router.post('/', (req: Request, res: Response) => {
     throw new AppError(400, 'Missing required fields');
   }
 
+  const validProducts = ['preview_pack', 'hd_unlock', 'full_pack'];
+  if (!validProducts.includes(productId)) {
+    throw new AppError(400, 'Invalid productId. Must be preview_pack, hd_unlock, or full_pack');
+  }
+
   const project = store.getProject(projectId);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
   if (project.userId !== userId) {
     throw new AppError(403, 'Access denied');
+  }
+
+  // Business logic validation
+  if (productId === 'hd_unlock') {
+    const hasPreview = project.purchasedProductId === 'preview_pack' || project.purchasedProductId === 'full_pack';
+    if (!hasPreview) {
+      throw new AppError(400, 'HD Unlock requires Preview Pack or Full Pack first');
+    }
+    if (!project.candidateUrls || project.selectedCandidateIndex === undefined) {
+      throw new AppError(400, 'Please generate and select a candidate image before unlocking HD');
+    }
   }
 
   const purchase: Purchase = {
@@ -38,8 +54,32 @@ router.post('/', (req: Request, res: Response) => {
 
   store.createPurchase(purchase);
 
-  // Update project status to indicate purchase is pending
-  store.updateProject(projectId, { status: ProjectStatus.PURCHASED });
+  // Apply product-specific project updates
+  const projectUpdates: Partial<Project> = {};
+
+  switch (productId) {
+    case 'preview_pack':
+      projectUpdates.purchasedProductId = 'preview_pack';
+      projectUpdates.regenerationLimit = 0;
+      // Status stays UPLOADED so user can click Generate
+      break;
+    case 'full_pack':
+      projectUpdates.purchasedProductId = 'full_pack';
+      projectUpdates.regenerationLimit = 2;
+      // If candidates already exist and selected, complete immediately
+      if (project.candidateUrls && project.selectedCandidateIndex !== undefined) {
+        projectUpdates.status = ProjectStatus.COMPLETED;
+        projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
+      }
+      break;
+    case 'hd_unlock':
+      // Unlock HD for selected candidate
+      projectUpdates.status = ProjectStatus.COMPLETED;
+      projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
+      break;
+  }
+
+  store.updateProject(projectId, projectUpdates);
 
   const response: ApiResponse<Purchase> = {
     success: true,
@@ -76,13 +116,31 @@ router.post('/verify', (req: Request, res: Response) => {
       verifiedAt: new Date().toISOString(),
     });
 
-    // Grant HD access
+    // Apply product-specific benefits on verification
     const project = store.getProject(purchase.projectId);
     if (project) {
-      store.updateProject(project.id, {
-        status: ProjectStatus.COMPLETED,
-        hdPhotoUrl: `https://picsum.photos/seed/${project.id}_hd/800/1200`,
-      });
+      const projectUpdates: Partial<Project> = {};
+
+      switch (purchase.productId) {
+        case 'preview_pack':
+          projectUpdates.purchasedProductId = 'preview_pack';
+          projectUpdates.regenerationLimit = 0;
+          break;
+        case 'full_pack':
+          projectUpdates.purchasedProductId = 'full_pack';
+          projectUpdates.regenerationLimit = 2;
+          if (project.candidateUrls && project.selectedCandidateIndex !== undefined) {
+            projectUpdates.status = ProjectStatus.COMPLETED;
+            projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
+          }
+          break;
+        case 'hd_unlock':
+          projectUpdates.status = ProjectStatus.COMPLETED;
+          projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
+          break;
+      }
+
+      store.updateProject(project.id, projectUpdates);
     }
   } else {
     store.createPurchase({

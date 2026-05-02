@@ -18,8 +18,14 @@ class MockStore {
 
   // Project operations
   createProject(project: Project): Project {
-    this.projects.set(project.id, project);
-    return project;
+    const initialized: Project = {
+      ...project,
+      regenerationCount: project.regenerationCount ?? 0,
+      regenerationLimit: project.regenerationLimit ?? 0,
+      generationHistory: project.generationHistory ?? [],
+    };
+    this.projects.set(project.id, initialized);
+    return initialized;
   }
 
   getProject(id: string): Project | undefined {

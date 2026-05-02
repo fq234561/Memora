@@ -6,6 +6,16 @@ export interface User {
   createdAt: string;
 }
 
+export interface GenerationHistoryEntry {
+  id: string;
+  type: 'initial' | 'regenerate';
+  timestamp: string;
+  prompt: string;
+  adjustmentPrompt?: string;
+  candidateUrls: string[];
+  status: 'success' | 'failed';
+}
+
 export interface Project {
   id: string;
   userId: string;
@@ -17,6 +27,12 @@ export interface Project {
   hdPhotoUrl?: string;
   status: ProjectStatus;
   consentGiven: boolean;
+  regenerationCount: number;
+  regenerationLimit: number;
+  candidateUrls?: string[];
+  selectedCandidateIndex?: number;
+  purchasedProductId?: string;
+  generationHistory: GenerationHistoryEntry[];
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +101,8 @@ export interface StatusResponse {
   status: ProjectStatus;
   progress?: number;
   resultUrl?: string;
+  candidateUrls?: string[];
+  regenerationRemaining?: number;
 }
 
 export interface PurchaseRequest {

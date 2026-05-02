@@ -33,6 +33,11 @@ data class ProjectDto(
     @SerializedName("hdPhotoUrl") val hdPhotoUrl: String? = null,
     @SerializedName("status") val status: String,
     @SerializedName("consentGiven") val consentGiven: Boolean = false,
+    @SerializedName("regenerationCount") val regenerationCount: Int = 0,
+    @SerializedName("regenerationLimit") val regenerationLimit: Int = 0,
+    @SerializedName("candidateUrls") val candidateUrls: List<String>? = null,
+    @SerializedName("selectedCandidateIndex") val selectedCandidateIndex: Int? = null,
+    @SerializedName("purchasedProductId") val purchasedProductId: String? = null,
     @SerializedName("createdAt") val createdAt: String,
     @SerializedName("updatedAt") val updatedAt: String
 )
@@ -59,7 +64,9 @@ data class ConfirmUploadRequest(
 data class StatusResponse(
     @SerializedName("status") val status: String,
     @SerializedName("progress") val progress: Int? = null,
-    @SerializedName("resultUrl") val resultUrl: String? = null
+    @SerializedName("resultUrl") val resultUrl: String? = null,
+    @SerializedName("candidateUrls") val candidateUrls: List<String>? = null,
+    @SerializedName("regenerationRemaining") val regenerationRemaining: Int? = null
 )
 
 data class PurchaseRequest(

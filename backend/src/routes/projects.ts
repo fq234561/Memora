@@ -10,6 +10,7 @@ import {
   ProjectStatus,
   UploadUrlResponse,
   StatusResponse,
+  GenerationHistoryEntry,
 } from '../models/types';
 import { store } from '../services/mockStore';
 import { AppError } from '../middleware/errorHandler';
@@ -61,6 +62,9 @@ router.post('/', validateBody(['title', 'style']), (req: Request, res: Response)
     style,
     status: ProjectStatus.DRAFT,
     consentGiven: false,
+    regenerationCount: 0,
+    regenerationLimit: 0,
+    generationHistory: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -168,7 +172,11 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
 router.post('/:id/generate', (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
-  const { customPrompt } = req.body as { customPrompt?: string };
+  const { customPrompt, adjustmentPrompt, isRegeneration } = req.body as {
+    customPrompt?: string;
+    adjustmentPrompt?: string;
+    isRegeneration?: boolean;
+  };
 
   const project = store.getProject(id);
   if (!project) {
@@ -177,26 +185,93 @@ router.post('/:id/generate', (req: Request, res: Response) => {
   if (project.userId !== userId) {
     throw new AppError(403, 'Access denied');
   }
-  if (project.status !== ProjectStatus.UPLOADED && project.status !== ProjectStatus.FAILED) {
+
+  // Check purchase entitlement
+  if (!project.purchasedProductId || !['preview_pack', 'full_pack'].includes(project.purchasedProductId)) {
+    throw new AppError(402, 'Purchase required: Preview Pack or Full Pack needed to generate');
+  }
+
+  // Allow generation from UPLOADED, PREVIEW_READY (regenerate), COMPLETED (regenerate from download), or FAILED
+  const allowedStatuses = [
+    ProjectStatus.UPLOADED,
+    ProjectStatus.PREVIEW_READY,
+    ProjectStatus.COMPLETED,
+    ProjectStatus.FAILED,
+  ];
+  if (!allowedStatuses.includes(project.status)) {
     throw new AppError(400, 'Project not ready for generation');
   }
+
+  // Check regeneration quota
+  if (isRegeneration) {
+    if (project.regenerationCount >= project.regenerationLimit) {
+      throw new AppError(403, 'Regeneration limit reached. Purchase additional regenerations to continue.');
+    }
+  }
+
+  // Save previous state for rollback on failure
+  const previousStatus = project.status;
+  const previousCandidateUrls = project.candidateUrls;
 
   const updates: Partial<Project> = { status: ProjectStatus.GENERATING };
   if (customPrompt) {
     (updates as any).customPrompt = customPrompt;
   }
+  // Clear previous candidates on new generation
+  updates.candidateUrls = undefined;
+  updates.selectedCandidateIndex = undefined;
   store.updateProject(id, updates);
 
   // Simulate async generation
   setTimeout(() => {
     const success = Math.random() > 0.1; // 90% success rate
     if (success) {
-      store.updateProject(id, {
+      // Generate 4 candidate images with different seeds
+      const candidateUrls = [
+        `https://picsum.photos/seed/${id}_c1/400/600`,
+        `https://picsum.photos/seed/${id}_c2/400/600`,
+        `https://picsum.photos/seed/${id}_c3/400/600`,
+        `https://picsum.photos/seed/${id}_c4/400/600`,
+      ];
+
+      const historyEntry: GenerationHistoryEntry = {
+        id: uuidv4(),
+        type: isRegeneration ? 'regenerate' : 'initial',
+        timestamp: new Date().toISOString(),
+        prompt: customPrompt || 'default_prompt',
+        adjustmentPrompt: adjustmentPrompt || undefined,
+        candidateUrls,
+        status: 'success',
+      };
+
+      const successUpdates: Partial<Project> = {
         status: ProjectStatus.PREVIEW_READY,
-        generatedPhotoUrl: `https://picsum.photos/seed/${id}/400/600`,
-      });
+        candidateUrls,
+      };
+
+      // Increment regeneration count only on successful regeneration
+      if (isRegeneration) {
+        successUpdates.regenerationCount = project.regenerationCount + 1;
+      }
+
+      // Append to generation history
+      const updatedHistory = [...project.generationHistory, historyEntry];
+      (successUpdates as any).generationHistory = updatedHistory;
+
+      store.updateProject(id, successUpdates);
     } else {
-      store.updateProject(id, { status: ProjectStatus.FAILED });
+      // Technical failure: rollback state, do NOT deduct regeneration count
+      const rollbackUpdates: Partial<Project> = {
+        status: previousCandidateUrls && previousCandidateUrls.length > 0
+          ? ProjectStatus.PREVIEW_READY
+          : previousStatus === ProjectStatus.COMPLETED
+            ? ProjectStatus.UPLOADED
+            : previousStatus,
+      };
+      if (previousCandidateUrls && previousCandidateUrls.length > 0) {
+        rollbackUpdates.candidateUrls = previousCandidateUrls;
+      }
+      store.updateProject(id, rollbackUpdates);
     }
   }, 5000);
 
@@ -206,6 +281,51 @@ router.post('/:id/generate', (req: Request, res: Response) => {
   };
 
   res.status(202).json(response);
+});
+
+// POST /api/projects/:id/select-candidate - Select a candidate image
+router.post('/:id/select-candidate', validateBody(['index']), (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const userId = req.user!.id;
+  const { index } = req.body as { index: number };
+
+  const project = store.getProject(id);
+  if (!project) {
+    throw new AppError(404, 'Project not found');
+  }
+  if (project.userId !== userId) {
+    throw new AppError(403, 'Access denied');
+  }
+  if (project.status !== ProjectStatus.PREVIEW_READY) {
+    throw new AppError(400, 'No candidates available for selection');
+  }
+  if (!project.candidateUrls || index < 0 || index >= project.candidateUrls.length) {
+    throw new AppError(400, 'Invalid candidate index');
+  }
+
+  const selectedUrl = project.candidateUrls[index];
+  const updates: Partial<Project> = {
+    selectedCandidateIndex: index,
+    generatedPhotoUrl: selectedUrl,
+  };
+
+  if (project.purchasedProductId === 'full_pack') {
+    // Full pack includes HD unlock, complete immediately
+    updates.status = ProjectStatus.COMPLETED;
+    updates.hdPhotoUrl = `https://picsum.photos/seed/${id}_hd/800/1200`;
+  } else {
+    // Preview pack requires separate HD unlock purchase
+    updates.status = ProjectStatus.PURCHASED;
+  }
+
+  store.updateProject(id, updates);
+
+  const response: ApiResponse<Project> = {
+    success: true,
+    data: store.getProject(id)!,
+  };
+
+  res.status(200).json(response);
 });
 
 // GET /api/projects/:id/status - Check generation status
@@ -230,6 +350,8 @@ router.get('/:id/status', (req: Request, res: Response) => {
     status: project.status,
     progress,
     resultUrl: project.generatedPhotoUrl,
+    candidateUrls: project.candidateUrls,
+    regenerationRemaining: Math.max(0, project.regenerationLimit - project.regenerationCount),
   };
 
   const response: ApiResponse<StatusResponse> = {

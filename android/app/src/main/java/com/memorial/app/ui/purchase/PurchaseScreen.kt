@@ -45,15 +45,32 @@ fun PurchaseScreen(
         }
     )
 ) {
+    val availableProducts by viewModel.availableProducts.collectAsState()
     val selectedProduct by viewModel.selectedProduct.collectAsState()
     val isPurchasing by viewModel.isPurchasing.collectAsState()
     val purchaseComplete by viewModel.purchaseComplete.collectAsState()
+    val navigateToDownload by viewModel.navigateToDownload.collectAsState()
+    val navigateToPreview by viewModel.navigateToPreview.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(purchaseComplete) {
-        if (purchaseComplete) {
+        if (purchaseComplete && !navigateToPreview && !navigateToDownload) {
             onPurchaseComplete()
+        }
+    }
+
+    LaunchedEffect(navigateToDownload) {
+        if (navigateToDownload) {
+            onPurchaseComplete()
+            viewModel.onNavigateHandled()
+        }
+    }
+
+    LaunchedEffect(navigateToPreview) {
+        if (navigateToPreview) {
+            onBack()
+            viewModel.onNavigateHandled()
         }
     }
 
@@ -67,7 +84,7 @@ fun PurchaseScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Unlock") },
+                title = { Text("Purchase") },
                 navigationIcon = {
                     OutlinedButton(onClick = onBack) {
                         Text("Back")
@@ -89,29 +106,43 @@ fun PurchaseScreen(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            PurchaseOptionCard(
-                option = PurchaseViewModel.ProductOption.HD_PHOTO,
-                selected = selectedProduct == PurchaseViewModel.ProductOption.HD_PHOTO,
-                onSelect = { viewModel.selectProduct(PurchaseViewModel.ProductOption.HD_PHOTO) }
-            )
-
-            PurchaseOptionCard(
-                option = PurchaseViewModel.ProductOption.PHOTO_AND_VIDEO,
-                selected = selectedProduct == PurchaseViewModel.ProductOption.PHOTO_AND_VIDEO,
-                onSelect = { viewModel.selectProduct(PurchaseViewModel.ProductOption.PHOTO_AND_VIDEO) }
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            if (isPurchasing) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else {
-                Button(
-                    onClick = { viewModel.purchase() },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = selectedProduct != null
+            if (availableProducts.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Purchase")
+                    Text(
+                        text = "You already own all available packages for this project.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onBack) {
+                        Text("Back to Project")
+                    }
+                }
+            } else {
+                availableProducts.forEach { option ->
+                    PurchaseOptionCard(
+                        option = option,
+                        selected = selectedProduct == option,
+                        onSelect = { viewModel.selectProduct(option) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                if (isPurchasing) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    Button(
+                        onClick = { viewModel.purchase() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = selectedProduct != null
+                    ) {
+                        Text("Purchase")
+                    }
                 }
             }
         }

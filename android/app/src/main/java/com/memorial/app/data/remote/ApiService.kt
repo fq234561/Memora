@@ -45,7 +45,7 @@ interface ApiService {
     @POST("api/projects/{id}/generate")
     suspend fun generatePhoto(
         @Path("id") id: String,
-        @Body request: Map<String, String>? = null
+        @Body request: Map<String, String?>? = null
     ): Response<ApiResponse<ProjectDto>>
 
     @GET("api/projects/{id}/status")
@@ -63,6 +63,12 @@ interface ApiService {
 
     @POST("api/purchases/verify")
     suspend fun verifyPurchase(@Body request: Map<String, String>): Response<ApiResponse<PurchaseDto>>
+
+    @POST("api/projects/{id}/select-candidate")
+    suspend fun selectCandidate(
+        @Path("id") id: String,
+        @Body request: Map<String, Int>
+    ): Response<ApiResponse<ProjectDto>>
 
     // Prompts
     @POST("api/prompts/optimize")

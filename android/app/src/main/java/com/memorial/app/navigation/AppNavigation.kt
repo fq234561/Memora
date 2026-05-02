@@ -135,6 +135,11 @@ fun AppNavigation(
                 onProceedToPurchase = {
                     navController.navigate(Screen.Purchase.createRoute(projectId))
                 },
+                onNavigateToDownload = {
+                    navController.navigate(Screen.Download.createRoute(projectId)) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -148,7 +153,9 @@ fun AppNavigation(
             PurchaseScreen(
                 projectId = projectId,
                 onPurchaseComplete = {
-                    navController.navigate(Screen.Download.createRoute(projectId))
+                    navController.navigate(Screen.Download.createRoute(projectId)) {
+                        popUpTo(Screen.Home.route)
+                    }
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -165,6 +172,11 @@ fun AppNavigation(
                 onBackToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onRegenerate = {
+                    navController.navigate(Screen.Preview.createRoute(projectId)) {
+                        popUpTo(Screen.Home.route)
                     }
                 }
             )

@@ -171,7 +171,9 @@ private fun ProjectCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Thumbnail
-            val thumbnailUrl = project.hdPhotoUrl ?: project.generatedPhotoUrl
+            val thumbnailUrl = project.hdPhotoUrl
+                ?: project.generatedPhotoUrl
+                ?: project.candidateUrls?.firstOrNull()
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -225,8 +227,14 @@ private fun ProjectCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
+                val actionText = when (project.status) {
+                    ProjectStatus.UPLOADED ->
+                        if (project.purchasedProductId != null) "Generate Candidates →" else "Purchase Preview →"
+                    ProjectStatus.PURCHASED -> "Unlock HD →"
+                    else -> statusInfo.actionText
+                }
                 Text(
-                    text = statusInfo.actionText,
+                    text = actionText,
                     style = MaterialTheme.typography.labelLarge,
                     color = if (isClickable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium

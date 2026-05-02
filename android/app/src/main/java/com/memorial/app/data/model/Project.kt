@@ -8,7 +8,11 @@ data class Project(
     val createdAt: String,
     val updatedAt: String,
     val generatedPhotoUrl: String? = null,
-    val hdPhotoUrl: String? = null
+    val hdPhotoUrl: String? = null,
+    val candidateUrls: List<String>? = null,
+    val regenerationCount: Int = 0,
+    val regenerationLimit: Int = 0,
+    val purchasedProductId: String? = null
 )
 
 enum class PhotoStyle {

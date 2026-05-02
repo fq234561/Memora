@@ -34,6 +34,12 @@ class DownloadViewModel(
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState
 
+    private val _regenerationRemaining = MutableStateFlow(0)
+    val regenerationRemaining: StateFlow<Int> = _regenerationRemaining
+
+    private val _navigateToPreview = MutableStateFlow(false)
+    val navigateToPreview: StateFlow<Boolean> = _navigateToPreview
+
     init {
         loadProject()
     }
@@ -51,12 +57,38 @@ class DownloadViewModel(
             if (result.isSuccess) {
                 val project = result.getOrNull()
                 _photoUrl.value = project?.hdPhotoUrl ?: project?.generatedPhotoUrl
+                _regenerationRemaining.value = (project?.regenerationLimit ?: 0) - (project?.regenerationCount ?: 0)
             } else {
                 _errorMessage.value = formatError(result.exceptionOrNull())
             }
 
             _isLoading.value = false
         }
+    }
+
+    fun regenerate(adjustmentPrompt: String?) {
+        viewModelScope.launch {
+            if (_regenerationRemaining.value <= 0) {
+                _errorMessage.value = "Regenerations exhausted. Contact support to purchase more."
+                return@launch
+            }
+
+            val result = repository.generatePhoto(
+                projectId,
+                isRegeneration = true,
+                adjustmentPrompt = adjustmentPrompt
+            )
+            if (result.isFailure) {
+                _errorMessage.value = formatError(result.exceptionOrNull())
+                return@launch
+            }
+
+            _navigateToPreview.value = true
+        }
+    }
+
+    fun onNavigateToPreviewHandled() {
+        _navigateToPreview.value = false
     }
 
     fun downloadAndSavePhoto(context: Context, url: String) {
@@ -133,6 +165,8 @@ class DownloadViewModel(
             msg.contains("refused", ignoreCase = true) ||
             msg.contains("CLEARTEXT", ignoreCase = true) ->
                 "Service temporarily unavailable. Please try again later."
+            msg.contains("Regeneration limit", ignoreCase = true) ->
+                "Regenerations exhausted. Contact support to purchase more."
             else -> msg
         }
     }

@@ -112,10 +112,19 @@ class ProjectRepository {
         }
     }
 
-    suspend fun generatePhoto(projectId: String, customPrompt: String? = null): Result<ProjectDto> = withContext(Dispatchers.IO) {
+    suspend fun generatePhoto(
+        projectId: String,
+        customPrompt: String? = null,
+        isRegeneration: Boolean = false,
+        adjustmentPrompt: String? = null
+    ): Result<ProjectDto> = withContext(Dispatchers.IO) {
         try {
-            val body = if (customPrompt != null) mapOf("customPrompt" to customPrompt) else null
-            val response = RetrofitClient.apiService.generatePhoto(projectId, body)
+            val body = mutableMapOf<String, String?>()
+            if (customPrompt != null) body["customPrompt"] = customPrompt
+            if (isRegeneration) body["isRegeneration"] = "true"
+            if (adjustmentPrompt != null) body["adjustmentPrompt"] = adjustmentPrompt
+            val requestBody = if (body.isEmpty()) null else body
+            val response = RetrofitClient.apiService.generatePhoto(projectId, requestBody)
             if (response.isSuccessful) {
                 val respBody = response.body()
                 if (respBody?.success == true && respBody.data != null) {
@@ -214,6 +223,24 @@ class ProjectRepository {
                 }
             } else {
                 Result.failure(Exception("Failed to verify purchase: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun selectCandidate(projectId: String, index: Int): Result<ProjectDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = RetrofitClient.apiService.selectCandidate(projectId, mapOf("index" to index))
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body?.success == true && body.data != null) {
+                    Result.success(body.data)
+                } else {
+                    Result.failure(Exception(body?.error ?: "Failed to select candidate"))
+                }
+            } else {
+                Result.failure(Exception("Failed to select candidate: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

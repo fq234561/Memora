@@ -80,7 +80,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             createdAt = createdAt,
             updatedAt = updatedAt,
             generatedPhotoUrl = generatedPhotoUrl,
-            hdPhotoUrl = hdPhotoUrl
+            hdPhotoUrl = hdPhotoUrl,
+            candidateUrls = candidateUrls,
+            regenerationCount = regenerationCount,
+            regenerationLimit = regenerationLimit,
+            purchasedProductId = purchasedProductId
         )
     }
 }
