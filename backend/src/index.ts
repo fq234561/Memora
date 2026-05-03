@@ -11,6 +11,11 @@ async function main() {
 
   const server = app.listen(env.PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+    console.log(
+      `Runtime env check: DATABASE_URL=${env.DATABASE_URL ? 'set' : 'missing'}, JWT_SECRET=${
+        env.JWT_SECRET ? 'set' : 'missing'
+      }, USE_MOCK_AUTH=${env.USE_MOCK_AUTH ? 'true' : 'false'}`
+    );
   });
 
   // Let Railway's health check confirm the HTTP process first.
