@@ -1,82 +1,112 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { Pool } from 'pg';
+import { env } from '../utils/env';
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(process.cwd(), 'memora.db');
-const db: any = new Database(DB_PATH);
+let pool: Pool | null = null;
 
-// Enable WAL mode for better concurrency
-db.pragma('journal_mode = WAL');
-
-export function getDb(): typeof db {
-  return db;
+export function getPool(): Pool {
+  if (!pool) {
+    if (!env.DATABASE_URL) {
+      throw new Error('DATABASE_URL is not configured');
+    }
+    pool = new Pool({
+      connectionString: env.DATABASE_URL,
+      ssl: env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+    });
+  }
+  return pool;
 }
 
-export function initDatabase(): void {
+export async function initDatabase(): Promise<void> {
+  const db = getPool();
+
   // Users table
-  db.exec(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL,
       avatar_url TEXT,
-      created_at TEXT NOT NULL
+      created_at TIMESTAMPTZ NOT NULL
     )
   `);
 
   // Projects table
-  db.exec(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
       style TEXT NOT NULL,
-      deceased_photo_url TEXT,
-      living_photo_url TEXT,
-      generated_photo_url TEXT,
-      hd_photo_url TEXT,
+      deceased_photo_key TEXT,
+      living_photo_key TEXT,
+      generated_photo_key TEXT,
+      hd_photo_key TEXT,
       status TEXT NOT NULL DEFAULT 'DRAFT',
-      consent_given INTEGER NOT NULL DEFAULT 0,
+      consent_given BOOLEAN NOT NULL DEFAULT false,
       regeneration_count INTEGER NOT NULL DEFAULT 0,
       regeneration_limit INTEGER NOT NULL DEFAULT 0,
-      candidate_urls TEXT,
+      candidate_keys JSONB,
       selected_candidate_index INTEGER,
       purchased_product_id TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
     )
   `);
 
   // Purchases table
-  db.exec(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS purchases (
       id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       product_id TEXT NOT NULL,
       purchase_token TEXT NOT NULL UNIQUE,
       status TEXT NOT NULL DEFAULT 'PENDING',
-      verified_at TEXT,
-      created_at TEXT NOT NULL
+      verified_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL
     )
   `);
 
   // Generation history table
-  db.exec(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS generation_history (
       id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       type TEXT NOT NULL,
-      timestamp TEXT NOT NULL,
+      timestamp TIMESTAMPTZ NOT NULL,
       prompt TEXT NOT NULL,
       adjustment_prompt TEXT,
-      candidate_urls TEXT NOT NULL,
+      candidate_keys JSONB NOT NULL,
       status TEXT NOT NULL
     )
   `);
 
+  // Contact messages table
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      type TEXT NOT NULL,
+      email TEXT,
+      message TEXT NOT NULL,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
   // Indexes
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_purchases_project ON purchases(project_id)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(purchase_token)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_generation_project ON generation_history(project_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_purchases_project ON purchases(project_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(purchase_token)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_generation_project ON generation_history(project_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_user ON contact_messages(user_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_type ON contact_messages(type)`);
+}
+
+export async function closeDatabase(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
 }

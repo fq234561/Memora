@@ -1,8 +1,9 @@
+import './instrument';
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import path from 'path';
+import * as Sentry from '@sentry/node';
 import { env } from './utils/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -13,7 +14,6 @@ import purchaseRoutes from './routes/purchases';
 import contactRoutes from './routes/contact';
 import healthRoutes from './routes/health';
 import promptRoutes from './routes/prompts';
-import uploadRoutes from './routes/uploads';
 
 export function createApp(): Application {
   const app = express();
@@ -39,13 +39,12 @@ export function createApp(): Application {
   app.use('/api/contact', contactRoutes);
   app.use('/api/health', healthRoutes);
   app.use('/api/prompts', promptRoutes);
-  app.use('/api/uploads', uploadRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {
     res.json({
       name: 'Memorial Photo API',
-      version: '0.1.0',
+      version: '1.0.0',
       environment: env.NODE_ENV,
       documentation: '/api/health',
     });
@@ -53,6 +52,7 @@ export function createApp(): Application {
 
   // Error handling
   app.use(notFoundHandler);
+  Sentry.setupExpressErrorHandler(app);
   app.use(errorHandler);
 
   return app;

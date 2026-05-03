@@ -1,41 +1,25 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import {
   ApiResponse,
   CreateProjectRequest,
   Project,
   ProjectStatus,
-  UploadUrlResponse,
   StatusResponse,
   GenerationHistoryEntry,
 } from '../models/types';
 import { store } from '../services/store';
+import { uploadFile, getSignedDownloadUrl } from '../services/storage';
 import { AppError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
 import { validateBody } from '../middleware/validator';
 
 const router = Router();
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueName = `${Date.now()}-${uuidv4().substring(0, 8)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
-
+// Multer memory storage for R2 upload
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
   fileFilter: (_req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -50,8 +34,39 @@ const upload = multer({
 // All project routes require authentication
 router.use(authMiddleware);
 
+// Helper: resolve photo key to signed URL (async)
+async function resolvePhotoUrl(key: string | undefined): Promise<string | undefined> {
+  if (!key) return undefined;
+  if (key.startsWith('http')) return key;
+  return getSignedDownloadUrl(key);
+}
+
+// Helper: add signed URLs to project response
+async function resolveProjectUrls(project: Project): Promise<Project> {
+  const [deceasedPhotoUrl, livingPhotoUrl, generatedPhotoUrl, hdPhotoUrl] = await Promise.all([
+    resolvePhotoUrl(project.deceasedPhotoUrl),
+    resolvePhotoUrl(project.livingPhotoUrl),
+    resolvePhotoUrl(project.generatedPhotoUrl),
+    resolvePhotoUrl(project.hdPhotoUrl),
+  ]);
+
+  const candidateUrls = project.candidateUrls
+    ? (await Promise.all(project.candidateUrls.map((k) => resolvePhotoUrl(k))))
+        .filter((u): u is string => u !== undefined)
+    : undefined;
+
+  return {
+    ...project,
+    deceasedPhotoUrl,
+    livingPhotoUrl,
+    generatedPhotoUrl,
+    hdPhotoUrl,
+    candidateUrls,
+  };
+}
+
 // POST /api/projects - Create a new project
-router.post('/', validateBody(['title', 'style']), (req: Request, res: Response) => {
+router.post('/', validateBody(['title', 'style']), async (req: Request, res: Response) => {
   const { title, style } = req.body as CreateProjectRequest;
   const userId = req.user!.id;
 
@@ -69,7 +84,7 @@ router.post('/', validateBody(['title', 'style']), (req: Request, res: Response)
     updatedAt: new Date().toISOString(),
   };
 
-  store.createProject(project);
+  await store.createProject(project);
 
   const response: ApiResponse<Project> = {
     success: true,
@@ -80,41 +95,25 @@ router.post('/', validateBody(['title', 'style']), (req: Request, res: Response)
 });
 
 // GET /api/projects - List user's projects
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const projects = store.getProjectsByUser(userId).map((p) => resolveProjectUrls(req, p));
+  const projects = await store.getProjectsByUser(userId);
+  const resolvedProjects = await Promise.all(projects.map((p) => resolveProjectUrls(p)));
 
   const response: ApiResponse<Project[]> = {
     success: true,
-    data: projects,
+    data: resolvedProjects,
   };
 
   res.status(200).json(response);
 });
 
-function resolveFileUrl(req: Request, url?: string): string | undefined {
-  if (!url) return undefined;
-  if (url.startsWith('http')) return url;
-  return `${req.protocol}://${req.get('host')}${url}`;
-}
-
-function resolveProjectUrls(req: Request, project: Project): Project {
-  return {
-    ...project,
-    deceasedPhotoUrl: resolveFileUrl(req, project.deceasedPhotoUrl),
-    livingPhotoUrl: resolveFileUrl(req, project.livingPhotoUrl),
-    generatedPhotoUrl: resolveFileUrl(req, project.generatedPhotoUrl),
-    hdPhotoUrl: resolveFileUrl(req, project.hdPhotoUrl),
-    candidateUrls: project.candidateUrls?.map((u) => resolveFileUrl(req, u)!),
-  };
-}
-
 // GET /api/projects/:id - Get project details
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -125,19 +124,19 @@ router.get('/:id', (req: Request, res: Response) => {
 
   const response: ApiResponse<Project> = {
     success: true,
-    data: resolveProjectUrls(req, project),
+    data: await resolveProjectUrls(project),
   };
 
   res.status(200).json(response);
 });
 
-// POST /api/projects/:id/upload - Upload photo file directly
-router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response) => {
+// POST /api/projects/:id/upload - Upload photo file to R2
+router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const { type } = req.body as { type?: string };
   const userId = req.user!.id;
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -153,18 +152,25 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
     throw new AppError(400, 'Invalid upload type. Must be "deceased" or "living"');
   }
 
-  // Store relative path for private access via authenticated route
-  const fileUrl = `/api/uploads/${req.file.filename}`;
+  // Upload to R2
+  const timestamp = Date.now();
+  const ext = req.file.mimetype === 'image/png' ? '.png' : req.file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+  const key = `raw/${userId}/${id}/${type}_${timestamp}_${uuidv4().substring(0, 8)}${ext}`;
+
+  await uploadFile(key, req.file.buffer, req.file.mimetype);
 
   const updates: Partial<Project> = {};
   if (type === 'deceased') {
-    updates.deceasedPhotoUrl = fileUrl;
+    updates.deceasedPhotoUrl = key;
   } else {
-    updates.livingPhotoUrl = fileUrl;
+    updates.livingPhotoUrl = key;
   }
 
   // Auto-update status if both photos uploaded
-  const currentProject = store.getProject(id)!;
+  const currentProject = await store.getProject(id);
+  if (!currentProject) {
+    throw new AppError(404, 'Project not found');
+  }
   const hasDeceased = type === 'deceased' ? true : !!currentProject.deceasedPhotoUrl;
   const hasLiving = type === 'living' ? true : !!currentProject.livingPhotoUrl;
 
@@ -172,13 +178,14 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
     updates.status = ProjectStatus.UPLOADED;
   }
 
-  store.updateProject(id, updates);
+  await store.updateProject(id, updates);
 
-  const response: ApiResponse<{ url: string; fileName: string }> = {
+  const updatedProject = await store.getProject(id);
+
+  const response: ApiResponse<{ project: Project }> = {
     success: true,
     data: {
-      url: fileUrl,
-      fileName: req.file.filename,
+      project: updatedProject ? await resolveProjectUrls(updatedProject) : currentProject,
     },
   };
 
@@ -186,7 +193,7 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
 });
 
 // POST /api/projects/:id/generate - Request AI generation
-router.post('/:id/generate', (req: Request, res: Response) => {
+router.post('/:id/generate', async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
   const { customPrompt, adjustmentPrompt, isRegeneration } = req.body as {
@@ -195,7 +202,7 @@ router.post('/:id/generate', (req: Request, res: Response) => {
     isRegeneration?: boolean;
   };
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -242,10 +249,10 @@ router.post('/:id/generate', (req: Request, res: Response) => {
   // Clear previous candidates on new generation
   updates.candidateUrls = undefined;
   updates.selectedCandidateIndex = undefined;
-  store.updateProject(id, updates);
+  await store.updateProject(id, updates);
 
   // Simulate async generation
-  setTimeout(() => {
+  setTimeout(async () => {
     const success = Math.random() > 0.1; // 90% success rate
     if (success) {
       // Generate 4 candidate images with different seeds
@@ -280,7 +287,7 @@ router.post('/:id/generate', (req: Request, res: Response) => {
       const updatedHistory = [...project.generationHistory, historyEntry];
       (successUpdates as any).generationHistory = updatedHistory;
 
-      store.updateProject(id, successUpdates);
+      await store.updateProject(id, successUpdates);
     } else {
       // Technical failure: rollback state, do NOT deduct regeneration count
       const rollbackUpdates: Partial<Project> = {
@@ -293,25 +300,27 @@ router.post('/:id/generate', (req: Request, res: Response) => {
       if (previousCandidateUrls && previousCandidateUrls.length > 0) {
         rollbackUpdates.candidateUrls = previousCandidateUrls;
       }
-      store.updateProject(id, rollbackUpdates);
+      await store.updateProject(id, rollbackUpdates);
     }
   }, 5000);
 
+  const currentProject = await store.getProject(id);
+
   const response: ApiResponse<Project> = {
     success: true,
-    data: store.getProject(id)!,
+    data: currentProject ? await resolveProjectUrls(currentProject) : project,
   };
 
   res.status(202).json(response);
 });
 
 // POST /api/projects/:id/select-candidate - Select a candidate image
-router.post('/:id/select-candidate', validateBody(['index']), (req: Request, res: Response) => {
+router.post('/:id/select-candidate', validateBody(['index']), async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
   const { index } = req.body as { index: number };
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -340,22 +349,24 @@ router.post('/:id/select-candidate', validateBody(['index']), (req: Request, res
     updates.status = ProjectStatus.PURCHASED;
   }
 
-  store.updateProject(id, updates);
+  await store.updateProject(id, updates);
+
+  const updatedProject = await store.getProject(id);
 
   const response: ApiResponse<Project> = {
     success: true,
-    data: store.getProject(id)!,
+    data: updatedProject ? await resolveProjectUrls(updatedProject) : project,
   };
 
   res.status(200).json(response);
 });
 
 // GET /api/projects/:id/status - Check generation status
-router.get('/:id/status', (req: Request, res: Response) => {
+router.get('/:id/status', async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -371,8 +382,11 @@ router.get('/:id/status', (req: Request, res: Response) => {
   const data: StatusResponse = {
     status: project.status,
     progress,
-    resultUrl: project.generatedPhotoUrl,
-    candidateUrls: project.candidateUrls,
+    resultUrl: await resolvePhotoUrl(project.generatedPhotoUrl),
+    candidateUrls: project.candidateUrls
+      ? (await Promise.all(project.candidateUrls.map((k) => resolvePhotoUrl(k))))
+          .filter((u): u is string => u !== undefined)
+      : undefined,
     regenerationRemaining: Math.max(0, project.regenerationLimit - project.regenerationCount),
   };
 
@@ -385,11 +399,11 @@ router.get('/:id/status', (req: Request, res: Response) => {
 });
 
 // POST /api/projects/:id/consent - Record consent
-router.post('/:id/consent', (req: Request, res: Response) => {
+router.post('/:id/consent', async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -397,22 +411,24 @@ router.post('/:id/consent', (req: Request, res: Response) => {
     throw new AppError(403, 'Access denied');
   }
 
-  store.updateProject(id, { consentGiven: true });
+  await store.updateProject(id, { consentGiven: true });
+
+  const updatedProject = await store.getProject(id);
 
   const response: ApiResponse<Project> = {
     success: true,
-    data: store.getProject(id)!,
+    data: updatedProject ? await resolveProjectUrls(updatedProject) : project,
   };
 
   res.status(200).json(response);
 });
 
 // DELETE /api/projects/:id - Delete project
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user!.id;
 
-  const project = store.getProject(id);
+  const project = await store.getProject(id);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -420,7 +436,7 @@ router.delete('/:id', (req: Request, res: Response) => {
     throw new AppError(403, 'Access denied');
   }
 
-  store.deleteProject(id);
+  await store.deleteProject(id);
 
   const response: ApiResponse = {
     success: true,

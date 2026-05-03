@@ -1,12 +1,14 @@
 import { Router, Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { ApiResponse, ContactRequest } from '../models/types';
+import { store } from '../services/store';
 import { AppError } from '../middleware/errorHandler';
 import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
 // POST /api/contact - Submit feedback, report, or deletion request
-router.post('/', optionalAuth, (req: Request, res: Response) => {
+router.post('/', optionalAuth, async (req: Request, res: Response) => {
   const { type, email, message, projectId } = req.body as ContactRequest;
 
   if (!type || !email || !message) {
@@ -21,9 +23,15 @@ router.post('/', optionalAuth, (req: Request, res: Response) => {
     throw new AppError(400, 'Message must be at least 10 characters');
   }
 
-  // In production: send email notification, store in DB, or create ticket
-  console.log(`[${type.toUpperCase()}] From: ${email}${projectId ? ` | Project: ${projectId}` : ''}`);
-  console.log(`Message: ${message.substring(0, 200)}${message.length > 200 ? '...' : ''}`);
+  // Persist to database
+  await store.createContactMessage({
+    id: uuidv4(),
+    userId: req.user?.id,
+    type,
+    email,
+    message,
+    metadata: projectId ? { projectId } : undefined,
+  });
 
   const response: ApiResponse = {
     success: true,

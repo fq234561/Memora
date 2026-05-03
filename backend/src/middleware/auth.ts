@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler';
 import { User } from '../models/types';
 import { store } from '../services/store';
+import { env } from '../utils/env';
 
 declare global {
   namespace Express {
@@ -12,12 +13,9 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret-change-in-production';
-const USE_MOCK_AUTH = process.env.USE_MOCK_AUTH === 'true';
-
 export function verifyToken(token: string): User | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as any;
     return {
       id: decoded.sub || decoded.id,
       email: decoded.email,
@@ -39,13 +37,13 @@ export function signToken(user: User): string {
       avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
     },
-    JWT_SECRET,
+    env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 }
 
 // Main auth middleware
-export function authMiddleware(req: Request, _res: Response, next: NextFunction): void {
+export async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -55,7 +53,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
   const token = authHeader.substring(7);
 
   // Mock auth mode (development only)
-  if (USE_MOCK_AUTH) {
+  if (env.USE_MOCK_AUTH) {
     if (token.length < 10) {
       throw new AppError(401, 'Invalid token');
     }
@@ -76,7 +74,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
   }
 
   // Ensure user exists in database
-  const dbUser = store.getUser(user.id);
+  const dbUser = await store.getUser(user.id);
   if (!dbUser) {
     throw new AppError(401, 'User not found');
   }
@@ -86,7 +84,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
 }
 
 // Optional auth - doesn't fail if no token
-export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -96,7 +94,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 
   const token = authHeader.substring(7);
 
-  if (USE_MOCK_AUTH) {
+  if (env.USE_MOCK_AUTH) {
     if (token.length >= 10) {
       req.user = {
         id: 'mock-user-' + token.substring(0, 8),
@@ -111,7 +109,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 
   const user = verifyToken(token);
   if (user) {
-    const dbUser = store.getUser(user.id);
+    const dbUser = await store.getUser(user.id);
     if (dbUser) {
       req.user = dbUser;
     }
@@ -121,7 +119,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 
 // Production safety check
 export function assertProductionAuth(): void {
-  if (process.env.NODE_ENV === 'production' && USE_MOCK_AUTH) {
+  if (env.NODE_ENV === 'production' && env.USE_MOCK_AUTH) {
     console.error('❌ FATAL: USE_MOCK_AUTH is enabled in production. Aborting startup.');
     console.error('   Set USE_MOCK_AUTH=false and configure JWT_SECRET before starting.');
     process.exit(1);

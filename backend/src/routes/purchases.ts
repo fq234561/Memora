@@ -5,15 +5,14 @@ import { store } from '../services/store';
 import { AppError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
 import { verifyGooglePlayPurchase, strongMockValidation } from '../services/googlePlay';
+import { env } from '../utils/env';
 
 const router = Router();
 
 router.use(authMiddleware);
 
-const GOOGLE_PLAY_PACKAGE_NAME = process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.memorial.app';
-
 // POST /api/purchases - Create a purchase record (PENDING only, NO entitlements granted)
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   const { projectId, productId, purchaseToken } = req.body as PurchaseRequest;
   const userId = req.user!.id;
 
@@ -26,7 +25,7 @@ router.post('/', (req: Request, res: Response) => {
     throw new AppError(400, 'Invalid productId. Must be preview_pack, hd_unlock, or full_pack');
   }
 
-  const project = store.getProject(projectId);
+  const project = await store.getProject(projectId);
   if (!project) {
     throw new AppError(404, 'Project not found');
   }
@@ -35,7 +34,7 @@ router.post('/', (req: Request, res: Response) => {
   }
 
   // Idempotency: same token cannot be used twice
-  const existingByToken = store.getPurchaseByToken(purchaseToken);
+  const existingByToken = await store.getPurchaseByToken(purchaseToken);
   if (existingByToken) {
     const response: ApiResponse<Purchase> = {
       success: true,
@@ -66,7 +65,7 @@ router.post('/', (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   };
 
-  store.createPurchase(purchase);
+  await store.createPurchase(purchase);
 
   const response: ApiResponse<Purchase> = {
     success: true,
@@ -85,7 +84,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     throw new AppError(400, 'Missing purchaseId');
   }
 
-  const purchase = store.getPurchase(purchaseId);
+  const purchase = await store.getPurchase(purchaseId);
   if (!purchase) {
     throw new AppError(404, 'Purchase not found');
   }
@@ -117,7 +116,7 @@ router.post('/verify', async (req: Request, res: Response) => {
 
   // Try Google Play Developer API first
   const googlePlayResult = await verifyGooglePlayPurchase(
-    GOOGLE_PLAY_PACKAGE_NAME,
+    env.GOOGLE_PLAY_PACKAGE_NAME,
     purchase.productId,
     purchase.purchaseToken
   );
@@ -142,14 +141,14 @@ router.post('/verify', async (req: Request, res: Response) => {
   }
 
   if (isValid) {
-    store.createPurchase({
+    await store.createPurchase({
       ...purchase,
       status: PurchaseStatus.VERIFIED,
       verifiedAt: new Date().toISOString(),
     });
 
     // Grant entitlements ONLY NOW after successful verification
-    const project = store.getProject(purchase.projectId);
+    const project = await store.getProject(purchase.projectId);
     if (project) {
       const projectUpdates: Partial<Project> = {};
 
@@ -172,16 +171,16 @@ router.post('/verify', async (req: Request, res: Response) => {
           break;
       }
 
-      store.updateProject(project.id, projectUpdates);
+      await store.updateProject(project.id, projectUpdates);
     }
   } else {
-    store.createPurchase({
+    await store.createPurchase({
       ...purchase,
       status: PurchaseStatus.FAILED,
     });
   }
 
-  const updatedPurchase = store.getPurchase(purchaseId);
+  const updatedPurchase = await store.getPurchase(purchaseId);
 
   const response: ApiResponse<Purchase> = {
     success: true,

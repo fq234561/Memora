@@ -5,8 +5,8 @@ import { store } from '../services/store';
 const router = Router();
 
 // GET /api/health - Health check
-router.get('/', (_req: Request, res: Response) => {
-  const stats = store.getStats();
+router.get('/', async (_req: Request, res: Response) => {
+  const stats = await store.getStats();
 
   const response: ApiResponse<{ status: string; uptime: number; stats: typeof stats }> = {
     success: true,

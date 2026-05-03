@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library';
+import { env } from '../utils/env';
 
 interface GooglePlayVerificationResult {
   valid: boolean;
@@ -14,7 +15,7 @@ let googleAuth: GoogleAuth | null = null;
 function initGoogleAuth(): GoogleAuth | null {
   if (googleAuth) return googleAuth;
 
-  const serviceAccountBase64 = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64;
+  const serviceAccountBase64 = env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64;
   if (!serviceAccountBase64) {
     return null;
   }

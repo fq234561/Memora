@@ -6,10 +6,9 @@ import { store } from '../services/store';
 import { AppError } from '../middleware/errorHandler';
 import { validateBody } from '../middleware/validator';
 import { signToken } from '../middleware/auth';
+import { env } from '../utils/env';
 
 const router = Router();
-const USE_MOCK_AUTH = process.env.USE_MOCK_AUTH === 'true';
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 // POST /api/auth/google
 router.post('/google', validateBody(['idToken']), async (req: Request, res: Response) => {
@@ -19,7 +18,7 @@ router.post('/google', validateBody(['idToken']), async (req: Request, res: Resp
   let name: string;
   let googleId: string;
 
-  if (USE_MOCK_AUTH) {
+  if (env.USE_MOCK_AUTH) {
     // Mock mode: skip Google verification, trust the idToken as a user identifier
     if (!idToken || idToken.length < 20) {
       throw new AppError(400, 'Invalid ID token');
@@ -29,14 +28,14 @@ router.post('/google', validateBody(['idToken']), async (req: Request, res: Resp
     name = 'Memorial User';
   } else {
     // Real Google Sign-In verification
-    if (!GOOGLE_CLIENT_ID) {
+    if (!env.GOOGLE_CLIENT_ID) {
       throw new AppError(500, 'Google OAuth not configured');
     }
-    const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+    const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
     try {
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: GOOGLE_CLIENT_ID,
+        audience: env.GOOGLE_CLIENT_ID,
       });
       const payload = ticket.getPayload();
       if (!payload) {
@@ -51,13 +50,13 @@ router.post('/google', validateBody(['idToken']), async (req: Request, res: Resp
   }
 
   // Find or create user
-  let user = store.getUser(googleId);
+  let user = await store.getUser(googleId);
   if (!user) {
     // Try by email for existing users
-    user = store.getUserByEmail(email);
+    user = await store.getUserByEmail(email);
   }
   if (!user) {
-    user = store.createUser({
+    user = await store.createUser({
       id: googleId,
       email,
       name,
