@@ -7,15 +7,21 @@ async function main() {
   // Production safety check
   assertProductionAuth();
 
-  // Initialize Postgres database
-  await initDatabase();
-  console.log('📦 Postgres database initialized');
-
   const app = createApp();
 
-  const server = app.listen(env.PORT, () => {
-    console.log(`🚀 Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  const server = app.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   });
+
+  // Let Railway's health check confirm the HTTP process first.
+  // Database startup errors are still visible in Deploy Logs.
+  initDatabase()
+    .then(() => {
+      console.log('Postgres database initialized');
+    })
+    .catch((err) => {
+      console.error('Postgres database initialization failed:', err);
+    });
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
