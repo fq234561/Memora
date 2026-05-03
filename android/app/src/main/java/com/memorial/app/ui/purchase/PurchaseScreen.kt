@@ -1,22 +1,30 @@
 package com.memorial.app.ui.purchase
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,13 +32,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.memorial.app.ui.theme.BackgroundWarm
+import com.memorial.app.ui.theme.DividerLight
+import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.TextMuted
+import com.memorial.app.ui.theme.TextPrimary
+import com.memorial.app.ui.theme.TextSecondary
+import com.memorial.app.ui.theme.TrustGreen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PurchaseScreen(
     projectId: String,
@@ -82,28 +99,51 @@ fun PurchaseScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Purchase") },
-                navigationIcon = {
-                    OutlinedButton(onClick = onBack) {
-                        Text("Back")
-                    }
-                }
-            )
-        },
+        containerColor = BackgroundWarm,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "选择套餐",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onBack() }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "返回",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = TextSecondary
+                        )
+                    )
+                }
+            }
+
             Text(
-                text = "Choose your package:",
-                style = MaterialTheme.typography.titleMedium
+                text = "选择适合您的纪念照套餐",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = TextSecondary
+                )
             )
 
             if (availableProducts.isEmpty()) {
@@ -112,14 +152,25 @@ fun PurchaseScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "You already own all available packages for this project.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = TrustGreen,
+                        modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onBack) {
-                        Text("Back to Project")
+                    Text(
+                        text = "您已拥有此项目的所有可用套餐",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = TextSecondary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onBack,
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                    ) {
+                        Text("返回项目")
                     }
                 }
             } else {
@@ -134,17 +185,34 @@ fun PurchaseScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 if (isPurchasing) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = PrimaryPurple
+                    )
                 } else {
                     Button(
                         onClick = { viewModel.purchase() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = selectedProduct != null
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        enabled = selectedProduct != null,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryPurple,
+                            disabledContainerColor = DividerLight
+                        )
                     ) {
-                        Text("Purchase")
+                        Text(
+                            "购买",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -155,36 +223,61 @@ private fun PurchaseOptionCard(
     selected: Boolean,
     onSelect: () -> Unit
 ) {
-    val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
+    val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else Color.White
 
-    androidx.compose.material3.Surface(
-        color = containerColor,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onSelect
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(bgColor)
+            .clickable { onSelect() }
+            .padding(20.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = option.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = option.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = option.price,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = option.title,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selected) PrimaryPurple else TextPrimary
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = option.description,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = TextSecondary
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = option.price,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = PrimaryPurple,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryPurple),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
         }
     }
 }

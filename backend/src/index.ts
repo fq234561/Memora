@@ -1,5 +1,14 @@
 import { createApp } from './app';
 import { env } from './utils/env';
+import { initDatabase } from './services/db';
+import { assertProductionAuth } from './middleware/auth';
+
+// Production safety check
+assertProductionAuth();
+
+// Initialize SQLite database
+initDatabase();
+console.log('📦 SQLite database initialized');
 
 const app = createApp();
 

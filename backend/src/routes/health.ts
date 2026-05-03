@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ApiResponse } from '../models/types';
-import { store } from '../services/mockStore';
+import { store } from '../services/store';
 
 const router = Router();
 

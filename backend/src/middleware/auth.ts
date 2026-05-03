@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler';
 import { User } from '../models/types';
+import { store } from '../services/store';
 
 declare global {
   namespace Express {
@@ -10,9 +12,40 @@ declare global {
   }
 }
 
-// Mock auth middleware - validates Bearer token and attaches mock user
-// In production, this verifies Google ID tokens
-export function mockAuth(req: Request, _res: Response, next: NextFunction): void {
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret-change-in-production';
+const USE_MOCK_AUTH = process.env.USE_MOCK_AUTH === 'true';
+
+export function verifyToken(token: string): User | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    return {
+      id: decoded.sub || decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+      avatarUrl: decoded.avatarUrl,
+      createdAt: decoded.createdAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function signToken(user: User): string {
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+// Main auth middleware
+export function authMiddleware(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,19 +54,34 @@ export function mockAuth(req: Request, _res: Response, next: NextFunction): void
 
   const token = authHeader.substring(7);
 
-  // Mock token validation - in production verify with Google
-  if (token.length < 10) {
-    throw new AppError(401, 'Invalid token');
+  // Mock auth mode (development only)
+  if (USE_MOCK_AUTH) {
+    if (token.length < 10) {
+      throw new AppError(401, 'Invalid token');
+    }
+    req.user = {
+      id: 'mock-user-' + token.substring(0, 8),
+      email: 'user@example.com',
+      name: 'Test User',
+      createdAt: new Date().toISOString(),
+    };
+    next();
+    return;
   }
 
-  // Attach mock user
-  req.user = {
-    id: 'mock-user-' + token.substring(0, 8),
-    email: 'user@example.com',
-    name: 'Test User',
-    createdAt: new Date().toISOString(),
-  };
+  // JWT verification (production)
+  const user = verifyToken(token);
+  if (!user) {
+    throw new AppError(401, 'Invalid or expired token');
+  }
 
+  // Ensure user exists in database
+  const dbUser = store.getUser(user.id);
+  if (!dbUser) {
+    throw new AppError(401, 'User not found');
+  }
+
+  req.user = dbUser;
   next();
 }
 
@@ -41,15 +89,41 @@ export function mockAuth(req: Request, _res: Response, next: NextFunction): void
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    req.user = {
-      id: 'mock-user-' + token.substring(0, 8),
-      email: 'user@example.com',
-      name: 'Test User',
-      createdAt: new Date().toISOString(),
-    };
+  if (!authHeader?.startsWith('Bearer ')) {
+    next();
+    return;
   }
 
+  const token = authHeader.substring(7);
+
+  if (USE_MOCK_AUTH) {
+    if (token.length >= 10) {
+      req.user = {
+        id: 'mock-user-' + token.substring(0, 8),
+        email: 'user@example.com',
+        name: 'Test User',
+        createdAt: new Date().toISOString(),
+      };
+    }
+    next();
+    return;
+  }
+
+  const user = verifyToken(token);
+  if (user) {
+    const dbUser = store.getUser(user.id);
+    if (dbUser) {
+      req.user = dbUser;
+    }
+  }
   next();
+}
+
+// Production safety check
+export function assertProductionAuth(): void {
+  if (process.env.NODE_ENV === 'production' && USE_MOCK_AUTH) {
+    console.error('❌ FATAL: USE_MOCK_AUTH is enabled in production. Aborting startup.');
+    console.error('   Set USE_MOCK_AUTH=false and configure JWT_SECRET before starting.');
+    process.exit(1);
+  }
 }

@@ -1,15 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiResponse, Purchase, PurchaseRequest, PurchaseStatus, ProjectStatus, Project } from '../models/types';
-import { store } from '../services/mockStore';
+import { store } from '../services/store';
 import { AppError } from '../middleware/errorHandler';
-import { mockAuth } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
+import { verifyGooglePlayPurchase, strongMockValidation } from '../services/googlePlay';
 
 const router = Router();
 
-router.use(mockAuth);
+router.use(authMiddleware);
 
-// POST /api/purchases - Create a purchase record
+const GOOGLE_PLAY_PACKAGE_NAME = process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.memorial.app';
+
+// POST /api/purchases - Create a purchase record (PENDING only, NO entitlements granted)
 router.post('/', (req: Request, res: Response) => {
   const { projectId, productId, purchaseToken } = req.body as PurchaseRequest;
   const userId = req.user!.id;
@@ -31,7 +34,18 @@ router.post('/', (req: Request, res: Response) => {
     throw new AppError(403, 'Access denied');
   }
 
-  // Business logic validation
+  // Idempotency: same token cannot be used twice
+  const existingByToken = store.getPurchaseByToken(purchaseToken);
+  if (existingByToken) {
+    const response: ApiResponse<Purchase> = {
+      success: true,
+      data: existingByToken,
+    };
+    res.status(200).json(response);
+    return;
+  }
+
+  // Business logic validation for HD unlock
   if (productId === 'hd_unlock') {
     const hasPreview = project.purchasedProductId === 'preview_pack' || project.purchasedProductId === 'full_pack';
     if (!hasPreview) {
@@ -54,33 +68,6 @@ router.post('/', (req: Request, res: Response) => {
 
   store.createPurchase(purchase);
 
-  // Apply product-specific project updates
-  const projectUpdates: Partial<Project> = {};
-
-  switch (productId) {
-    case 'preview_pack':
-      projectUpdates.purchasedProductId = 'preview_pack';
-      projectUpdates.regenerationLimit = 0;
-      // Status stays UPLOADED so user can click Generate
-      break;
-    case 'full_pack':
-      projectUpdates.purchasedProductId = 'full_pack';
-      projectUpdates.regenerationLimit = 2;
-      // If candidates already exist and selected, complete immediately
-      if (project.candidateUrls && project.selectedCandidateIndex !== undefined) {
-        projectUpdates.status = ProjectStatus.COMPLETED;
-        projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
-      }
-      break;
-    case 'hd_unlock':
-      // Unlock HD for selected candidate
-      projectUpdates.status = ProjectStatus.COMPLETED;
-      projectUpdates.hdPhotoUrl = `https://picsum.photos/seed/${project.id}_hd/800/1200`;
-      break;
-  }
-
-  store.updateProject(projectId, projectUpdates);
-
   const response: ApiResponse<Purchase> = {
     success: true,
     data: purchase,
@@ -89,8 +76,8 @@ router.post('/', (req: Request, res: Response) => {
   res.status(201).json(response);
 });
 
-// POST /api/purchases/verify - Verify purchase with Google Play
-router.post('/verify', (req: Request, res: Response) => {
+// POST /api/purchases/verify - Verify purchase and grant entitlements ONLY on success
+router.post('/verify', async (req: Request, res: Response) => {
   const { purchaseId } = req.body as { purchaseId?: string };
   const userId = req.user!.id;
 
@@ -106,8 +93,53 @@ router.post('/verify', (req: Request, res: Response) => {
     throw new AppError(403, 'Access denied');
   }
 
-  // Mock verification - in production, verify with Google Play Developer API
-  const isValid = purchase.purchaseToken.length >= 3;
+  // Already verified: return cached result, do NOT re-grant entitlements
+  if (purchase.status === PurchaseStatus.VERIFIED) {
+    const response: ApiResponse<Purchase> = {
+      success: true,
+      data: purchase,
+    };
+    res.status(200).json(response);
+    return;
+  }
+
+  // Already failed: return failure
+  if (purchase.status === PurchaseStatus.FAILED) {
+    const response: ApiResponse<Purchase> = {
+      success: true,
+      data: purchase,
+    };
+    res.status(200).json(response);
+    return;
+  }
+
+  let isValid: boolean;
+
+  // Try Google Play Developer API first
+  const googlePlayResult = await verifyGooglePlayPurchase(
+    GOOGLE_PLAY_PACKAGE_NAME,
+    purchase.productId,
+    purchase.purchaseToken
+  );
+
+  if (googlePlayResult.error && googlePlayResult.error.includes('not configured')) {
+    // Fallback: strong mock validation
+    console.warn('[purchases] Google Play API not configured. Using strong mock validation.');
+    isValid = strongMockValidation(purchase.purchaseToken);
+  } else if (googlePlayResult.error) {
+    // Google Play API error
+    console.error('[purchases] Google Play verification error:', googlePlayResult.error);
+    isValid = false;
+  } else {
+    // Google Play API success
+    isValid = googlePlayResult.valid && googlePlayResult.purchaseState === 1;
+    if (!isValid) {
+      console.warn('[purchases] Google Play purchase invalid:', {
+        purchaseState: googlePlayResult.purchaseState,
+        productId: googlePlayResult.productId,
+      });
+    }
+  }
 
   if (isValid) {
     store.createPurchase({
@@ -116,7 +148,7 @@ router.post('/verify', (req: Request, res: Response) => {
       verifiedAt: new Date().toISOString(),
     });
 
-    // Apply product-specific benefits on verification
+    // Grant entitlements ONLY NOW after successful verification
     const project = store.getProject(purchase.projectId);
     if (project) {
       const projectUpdates: Partial<Project> = {};

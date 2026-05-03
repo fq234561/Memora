@@ -1,6 +1,7 @@
 package com.memorial.app.ui.preview
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,16 +16,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +37,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,14 +49,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.memorial.app.ui.theme.BackgroundWarm
+import com.memorial.app.ui.theme.DividerLight
+import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryPurpleDark
+import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.TextMuted
+import com.memorial.app.ui.theme.TextPrimary
+import com.memorial.app.ui.theme.TextSecondary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreviewScreen(
     projectId: String,
@@ -78,20 +87,19 @@ fun PreviewScreen(
     val selectedIndex by viewModel.selectedIndex.collectAsState()
     val regenerationRemaining by viewModel.regenerationRemaining.collectAsState()
     val purchasedProductId by viewModel.purchasedProductId.collectAsState()
-    val onNavigateToPurchase by viewModel.onNavigateToPurchase.collectAsState()
-    val onNavigateToDownload by viewModel.onNavigateToDownload.collectAsState()
+    val shouldNavigateToPurchase by viewModel.onNavigateToPurchase.collectAsState()
+    val shouldNavigateToDownload by viewModel.onNavigateToDownload.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Navigation effects
-    LaunchedEffect(onNavigateToPurchase) {
-        if (onNavigateToPurchase) {
+    LaunchedEffect(shouldNavigateToPurchase) {
+        if (shouldNavigateToPurchase) {
             onProceedToPurchase()
             viewModel.onNavigateToPurchaseHandled()
         }
     }
 
-    LaunchedEffect(onNavigateToDownload) {
-        if (onNavigateToDownload) {
+    LaunchedEffect(shouldNavigateToDownload) {
+        if (shouldNavigateToDownload) {
             onNavigateToDownload()
             viewModel.onNavigateToDownloadHandled()
         }
@@ -104,38 +112,60 @@ fun PreviewScreen(
         }
     }
 
-    // Regenerate dialog state
     var showRegenerateDialog by remember { mutableStateOf(false) }
     var adjustmentText by remember { mutableStateOf("") }
     var useAdjustment by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Preview") },
-                navigationIcon = {
-                    OutlinedButton(onClick = onBack) {
-                        Text("Back")
-                    }
-                }
-            )
-        },
+        containerColor = BackgroundWarm,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "预览与选择",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onBack() }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "返回",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = TextSecondary
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             when (uiState) {
                 is PreviewViewModel.PreviewUiState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = PrimaryPurple)
                     }
                 }
 
@@ -178,35 +208,34 @@ fun PreviewScreen(
         }
     }
 
-    // Regenerate dialog
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("Regenerate Candidates") },
+            title = { Text("重新生成候选") },
             text = {
                 Column {
-                    Text("You have $regenerationRemaining regeneration(s) remaining.")
+                    Text("您还有 $regenerationRemaining 次重新生成机会。")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = !useAdjustment,
                             onClick = { useAdjustment = false }
                         )
-                        Text("Same settings")
+                        Text("使用相同设置")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = useAdjustment,
                             onClick = { useAdjustment = true }
                         )
-                        Text("Add adjustment")
+                        Text("添加调整说明")
                     }
                     if (useAdjustment) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = adjustmentText,
                             onValueChange = { adjustmentText = it },
-                            label = { Text("Describe what to change") },
+                            label = { Text("描述您想要的调整") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2
                         )
@@ -222,14 +251,15 @@ fun PreviewScreen(
                         adjustmentText = ""
                         useAdjustment = false
                     },
-                    enabled = regenerationRemaining > 0
+                    enabled = regenerationRemaining > 0,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
                 ) {
-                    Text("Regenerate")
+                    Text("重新生成")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("Cancel")
+                    Text("取消")
                 }
             }
         )
@@ -245,30 +275,63 @@ private fun PurchaseRequiredContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(PrimaryPurple.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = PrimaryPurple,
+                modifier = Modifier.size(40.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Text(
-            text = "Generate AI Memorial Photo",
-            style = MaterialTheme.typography.titleLarge
+            text = "准备生成纪念照",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Purchase a Preview Pack to generate 4 AI candidate images.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = "购买预览套餐后，AI 将为您生成 4 张候选纪念照",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = TextSecondary
+            ),
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = onPurchase,
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
         ) {
-            Text("Purchase Preview Pack ($2.99)")
+            Text(
+                "购买预览套餐 ($2.99)",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedButton(
             onClick = onPurchase,
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Get Full Pack ($12.99)")
+            Text("购买完整套餐 ($12.99)")
         }
     }
 }
@@ -282,23 +345,48 @@ private fun ReadyToGenerateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(PrimaryPurple.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = PrimaryPurple, modifier = Modifier.size(40.dp))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Text(
-            text = "Ready to Generate",
-            style = MaterialTheme.typography.titleLarge
+            text = "准备就绪",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Your photos and style preferences are ready. Generate 4 AI candidate images now.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = "照片和风格偏好已准备好。现在生成 4 张 AI 候选纪念照。",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = TextSecondary
+            ),
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = onGenerate,
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
         ) {
-            Text("Generate 4 Candidates")
+            Text(
+                "生成 4 张候选",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
         }
     }
 }
@@ -310,19 +398,33 @@ private fun GeneratingContent(progress: Int?) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator()
-            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(color = PrimaryPurple, modifier = Modifier.size(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "Generating your memorial photo candidates...",
-                style = MaterialTheme.typography.bodyLarge
+                "正在生成您的纪念照候选...",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Medium
+                )
             )
             Spacer(modifier = Modifier.height(8.dp))
             progress?.let {
-                Text("$it%", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "$it%",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = PrimaryPurple,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = { it / 100f },
-                    modifier = Modifier.fillMaxWidth(0.6f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = PrimaryPurple,
+                    trackColor = DividerLight
                 )
             }
         }
@@ -339,21 +441,22 @@ private fun CandidatesContent(
     onRegenerate: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "Choose your favorite",
-            style = MaterialTheme.typography.titleMedium
+            text = "选择最接近您想要的那张",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
         )
         Text(
-            text = "Tap to select one candidate image",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "点击选择一张候选图像",
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = TextMuted
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 2x2 Grid of candidates
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.weight(1f),
@@ -366,18 +469,17 @@ private fun CandidatesContent(
                 Box(
                     modifier = Modifier
                         .aspectRatio(3f / 4f)
-                        .clip(MaterialTheme.shapes.medium)
+                        .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = if (isSelected) 3.dp else 1.dp,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outline,
-                            shape = MaterialTheme.shapes.medium
+                            color = if (isSelected) PrimaryPurple else DividerLight,
+                            shape = RoundedCornerShape(12.dp)
                         )
                         .clickable { onSelect(index) }
                 ) {
                     AsyncImage(
                         model = url,
-                        contentDescription = "Candidate ${index + 1}",
+                        contentDescription = "候选 ${index + 1}",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -388,15 +490,14 @@ private fun CandidatesContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Selected",
-                                tint = MaterialTheme.colorScheme.primary,
+                                contentDescription = "已选中",
+                                tint = PrimaryPurple,
                                 modifier = Modifier
                                     .padding(8.dp)
                                     .size(28.dp)
                             )
                         }
                     }
-                    // Watermark overlay
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.BottomCenter
@@ -414,34 +515,45 @@ private fun CandidatesContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Regenerate button
         if (purchasedProductId == "full_pack") {
             OutlinedButton(
                 onClick = onRegenerate,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
                 enabled = regenerationRemaining > 0
             ) {
                 Text(
                     if (regenerationRemaining > 0)
-                        "Regenerate ($regenerationRemaining left)"
+                        "重新生成 (剩余 $regenerationRemaining 次)"
                     else
-                        "Regenerations exhausted"
+                        "重新生成次数已用完"
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Confirm button
         Button(
             onClick = onConfirm,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = selectedIndex != null
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            enabled = selectedIndex != null,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryPurple,
+                disabledContainerColor = DividerLight
+            )
         ) {
             Text(
                 if (purchasedProductId == "full_pack")
-                    "Confirm Selection & Unlock HD"
+                    "确认选择并解锁高清"
                 else
-                    "Confirm Selection & Unlock HD ($6.99)"
+                    "确认选择并解锁高清 ($6.99)",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
             )
         }
     }
@@ -459,19 +571,17 @@ private fun ErrorContent(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = errorMessage ?: "Generation failed",
+                text = errorMessage ?: "生成失败",
                 color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge
             )
             Spacer(modifier = Modifier.height(16.dp))
-            if (hasPurchase) {
-                Button(onClick = onRetry) {
-                    Text("Try Again")
-                }
-            } else {
-                Button(onClick = onRetry) {
-                    Text("Retry")
-                }
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+            ) {
+                Text(if (hasPurchase) "重试" else "重试")
             }
         }
     }

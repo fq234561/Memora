@@ -33,3 +33,7 @@ temp/
 test_huge.bmp
 backend/test_img.jpg
 backend/uploads/
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+screen_*.png

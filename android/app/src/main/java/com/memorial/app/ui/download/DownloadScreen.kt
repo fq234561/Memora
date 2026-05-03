@@ -1,6 +1,8 @@
 package com.memorial.app.ui.download
 
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +31,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,15 +40,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.memorial.app.ui.theme.BackgroundWarm
+import com.memorial.app.ui.theme.DividerLight
+import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.TextMuted
+import com.memorial.app.ui.theme.TextPrimary
+import com.memorial.app.ui.theme.TextSecondary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadScreen(
     projectId: String,
@@ -69,7 +83,6 @@ fun DownloadScreen(
     val navigateToPreview by viewModel.navigateToPreview.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Regenerate dialog state
     var showRegenerateDialog by remember { mutableStateOf(false) }
     var adjustmentText by remember { mutableStateOf("") }
     var useAdjustment by remember { mutableStateOf(false) }
@@ -77,12 +90,12 @@ fun DownloadScreen(
     LaunchedEffect(saveState) {
         when (saveState) {
             is DownloadViewModel.SaveState.Success -> {
-                Toast.makeText(context, "Photo saved to gallery", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "照片已保存到相册", Toast.LENGTH_SHORT).show()
                 viewModel.clearSaveState()
             }
             is DownloadViewModel.SaveState.Error -> {
                 val msg = (saveState as DownloadViewModel.SaveState.Error).message
-                Toast.makeText(context, "Save failed: $msg", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "保存失败: $msg", Toast.LENGTH_LONG).show()
                 viewModel.clearSaveState()
             }
             else -> {}
@@ -104,164 +117,211 @@ fun DownloadScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Your Memorial") },
-                actions = {
-                    IconButton(onClick = { /* Share */ }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share")
-                    }
-                }
-            )
-        },
+        containerColor = BackgroundWarm,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "您的纪念照",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { /* Share */ }) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = "分享",
+                        tint = TextSecondary
+                    )
+                }
+            }
+
             Text(
-                text = "AI-generated memorial image",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "AI 生成的纪念合照",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextMuted
+                ),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             when {
                 isLoading -> {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Loading your photo...")
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PrimaryPurple)
+                    }
                 }
 
                 errorMessage != null -> {
-                    Text(
-                        text = errorMessage ?: "Failed to load",
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.retryLoad() }) {
-                        Text("Retry")
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = errorMessage ?: "加载失败",
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { viewModel.retryLoad() },
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                            ) {
+                                Text("重试")
+                            }
+                        }
                     }
                 }
 
                 else -> {
-                    // Display final image
-                    photoUrl?.let { url ->
-                        AsyncImage(
-                            model = url,
-                            contentDescription = "HD Memorial Photo",
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Image card
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(400.dp)
-                        )
-                    } ?: run {
-                        androidx.compose.material3.Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(400.dp)
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color.White)
+                                .padding(12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("HD Memorial Photo", textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = {
                             photoUrl?.let { url ->
-                                viewModel.downloadAndSavePhoto(context, url)
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = "高清纪念照",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(12.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } ?: run {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("高清纪念照", textAlign = TextAlign.Center)
+                                }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = saveState !is DownloadViewModel.SaveState.Saving && photoUrl != null
-                    ) {
-                        if (saveState is DownloadViewModel.SaveState.Saving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Button(
+                            onClick = {
+                                photoUrl?.let { url ->
+                                    viewModel.downloadAndSavePhoto(context, url)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            enabled = saveState !is DownloadViewModel.SaveState.Saving && photoUrl != null,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PrimaryPurple,
+                                disabledContainerColor = DividerLight
                             )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text("Saving...")
-                        } else {
-                            Text("Download Photo")
-                        }
-                    }
-
-                    // Regenerate button
-                    if (regenerationRemaining > 0) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = { showRegenerateDialog = true },
-                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Regenerate ($regenerationRemaining left)")
+                            if (saveState is DownloadViewModel.SaveState.Saving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text("保存中...")
+                            } else {
+                                Text(
+                                    "下载高清照片",
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
                         }
-                    } else {
+
+                        if (regenerationRemaining > 0) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { showRegenerateDialog = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Text("重新生成 (剩余 $regenerationRemaining 次)")
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Regenerations exhausted",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onBackToHome,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text("返回首页")
+                        }
 
-                    Button(
-                        onClick = onBackToHome,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Back to Home")
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
     }
 
-    // Regenerate dialog
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("Regenerate Candidates") },
+            title = { Text("重新生成候选") },
             text = {
                 Column {
-                    Text("You have $regenerationRemaining regeneration(s) remaining.")
+                    Text("您还有 $regenerationRemaining 次重新生成机会。")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = !useAdjustment,
                             onClick = { useAdjustment = false }
                         )
-                        Text("Same settings")
+                        Text("使用相同设置")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = useAdjustment,
                             onClick = { useAdjustment = true }
                         )
-                        Text("Add adjustment")
+                        Text("添加调整说明")
                     }
                     if (useAdjustment) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = adjustmentText,
                             onValueChange = { adjustmentText = it },
-                            label = { Text("Describe what to change") },
+                            label = { Text("描述您想要的调整") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2
                         )
@@ -277,14 +337,15 @@ fun DownloadScreen(
                         adjustmentText = ""
                         useAdjustment = false
                     },
-                    enabled = regenerationRemaining > 0
+                    enabled = regenerationRemaining > 0,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
                 ) {
-                    Text("Regenerate")
+                    Text("重新生成")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("Cancel")
+                    Text("取消")
                 }
             }
         )

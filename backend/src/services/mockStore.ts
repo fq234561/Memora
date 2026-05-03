@@ -60,6 +60,10 @@ class MockStore {
     return this.purchases.get(id);
   }
 
+  getPurchaseByToken(token: string): Purchase | undefined {
+    return Array.from(this.purchases.values()).find((p) => p.purchaseToken === token);
+  }
+
   // Stats
   getStats(): { users: number; projects: number; purchases: number } {
     return {

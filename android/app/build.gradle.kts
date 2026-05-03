@@ -21,8 +21,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "ENABLE_MOCK_AUTH", "true")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            buildConfigField("String", "LOG_LEVEL", "\"BODY\"")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "ENABLE_MOCK_AUTH", "false")
+            buildConfigField("String", "API_BASE_URL", "\"https://api.memora.app/\"")
+            buildConfigField("String", "LOG_LEVEL", "\"NONE\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

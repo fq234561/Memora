@@ -1,6 +1,7 @@
 package com.memorial.app.data.remote
 
 import android.content.Context
+import com.memorial.app.BuildConfig
 import com.memorial.app.data.local.TokenManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -10,10 +11,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    // Update this to your backend URL
-    // For emulator testing localhost: use "http://10.0.2.2:3000/"
-    // For physical device on same network: use your computer's IP
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    private val BASE_URL = BuildConfig.API_BASE_URL
 
     private var tokenManager: TokenManager? = null
 
@@ -25,10 +23,16 @@ object RetrofitClient {
         tokenManager?.accessToken = token
     }
 
-    private fun getClient(): OkHttpClient {
+    fun getAuthenticatedClient(): OkHttpClient {
+        val loggingLevel = when (BuildConfig.LOG_LEVEL) {
+            "BODY" -> HttpLoggingInterceptor.Level.BODY
+            "HEADERS" -> HttpLoggingInterceptor.Level.HEADERS
+            "BASIC" -> HttpLoggingInterceptor.Level.BASIC
+            else -> HttpLoggingInterceptor.Level.NONE
+        }
+
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            // Enable full logging for MVP testing
-            level = HttpLoggingInterceptor.Level.BODY
+            level = loggingLevel
         }
 
         return OkHttpClient.Builder()
@@ -44,6 +48,10 @@ object RetrofitClient {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
+    }
+
+    private fun getClient(): OkHttpClient {
+        return getAuthenticatedClient()
     }
 
     private val retrofit: Retrofit by lazy {

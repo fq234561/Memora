@@ -3,14 +3,14 @@ import { ApiResponse } from '../models/types';
 import { PromptOptimizeRequest, OptimizedPromptResult } from '../models/prompt';
 import { promptOptimizer } from '../services/promptOptimizer';
 import { AppError } from '../middleware/errorHandler';
-import { mockAuth } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 import { validateBody } from '../middleware/validator';
 
 const router = Router();
 
-router.use(mockAuth);
+router.use(authMiddleware);
 
-// POST /api/prompts/optimize â€” Build a GPT Image 2 prompt from user inputs
+// POST /api/prompts/optimize â€?Build a GPT Image 2 prompt from user inputs
 router.post(
   '/optimize',
   validateBody(['relationship', 'photoType', 'style']),

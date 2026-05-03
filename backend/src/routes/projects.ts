@@ -12,9 +12,9 @@ import {
   StatusResponse,
   GenerationHistoryEntry,
 } from '../models/types';
-import { store } from '../services/mockStore';
+import { store } from '../services/store';
 import { AppError } from '../middleware/errorHandler';
-import { mockAuth } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 import { validateBody } from '../middleware/validator';
 
 const router = Router();
@@ -48,7 +48,7 @@ const upload = multer({
 });
 
 // All project routes require authentication
-router.use(mockAuth);
+router.use(authMiddleware);
 
 // POST /api/projects - Create a new project
 router.post('/', validateBody(['title', 'style']), (req: Request, res: Response) => {
@@ -80,9 +80,9 @@ router.post('/', validateBody(['title', 'style']), (req: Request, res: Response)
 });
 
 // GET /api/projects - List user's projects
-router.get('/', (_req: Request, res: Response) => {
-  const userId = _req.user!.id;
-  const projects = store.getProjectsByUser(userId);
+router.get('/', (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const projects = store.getProjectsByUser(userId).map((p) => resolveProjectUrls(req, p));
 
   const response: ApiResponse<Project[]> = {
     success: true,
@@ -91,6 +91,23 @@ router.get('/', (_req: Request, res: Response) => {
 
   res.status(200).json(response);
 });
+
+function resolveFileUrl(req: Request, url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http')) return url;
+  return `${req.protocol}://${req.get('host')}${url}`;
+}
+
+function resolveProjectUrls(req: Request, project: Project): Project {
+  return {
+    ...project,
+    deceasedPhotoUrl: resolveFileUrl(req, project.deceasedPhotoUrl),
+    livingPhotoUrl: resolveFileUrl(req, project.livingPhotoUrl),
+    generatedPhotoUrl: resolveFileUrl(req, project.generatedPhotoUrl),
+    hdPhotoUrl: resolveFileUrl(req, project.hdPhotoUrl),
+    candidateUrls: project.candidateUrls?.map((u) => resolveFileUrl(req, u)!),
+  };
+}
 
 // GET /api/projects/:id - Get project details
 router.get('/:id', (req: Request, res: Response) => {
@@ -108,7 +125,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
   const response: ApiResponse<Project> = {
     success: true,
-    data: project,
+    data: resolveProjectUrls(req, project),
   };
 
   res.status(200).json(response);
@@ -136,8 +153,8 @@ router.post('/:id/upload', upload.single('photo'), (req: Request, res: Response)
     throw new AppError(400, 'Invalid upload type. Must be "deceased" or "living"');
   }
 
-  // Build public URL for the uploaded file
-  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  // Store relative path for private access via authenticated route
+  const fileUrl = `/api/uploads/${req.file.filename}`;
 
   const updates: Partial<Project> = {};
   if (type === 'deceased') {
@@ -189,6 +206,11 @@ router.post('/:id/generate', (req: Request, res: Response) => {
   // Check purchase entitlement
   if (!project.purchasedProductId || !['preview_pack', 'full_pack'].includes(project.purchasedProductId)) {
     throw new AppError(402, 'Purchase required: Preview Pack or Full Pack needed to generate');
+  }
+
+  // P0-5: Require user consent before generating
+  if (!project.consentGiven) {
+    throw new AppError(403, 'User consent required before generation. Please agree to the terms first.');
   }
 
   // Allow generation from UPLOADED, PREVIEW_READY (regenerate), COMPLETED (regenerate from download), or FAILED
