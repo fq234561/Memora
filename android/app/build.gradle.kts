@@ -29,7 +29,7 @@ android {
         release {
             isMinifyEnabled = false
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "false")
-            buildConfigField("String", "API_BASE_URL", "\"https://api.memora.app/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://memora-production-8d49.up.railway.app/\"")
             buildConfigField("String", "LOG_LEVEL", "\"NONE\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
