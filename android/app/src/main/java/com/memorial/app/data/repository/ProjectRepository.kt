@@ -77,7 +77,7 @@ class ProjectRepository {
         type: String,
         uri: Uri,
         context: Context
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<ProjectDto> = withContext(Dispatchers.IO) {
         try {
             // Copy URI content to temporary file
             val tempFile = File(context.cacheDir, "upload_${type}_${System.currentTimeMillis()}.jpg")
@@ -100,7 +100,7 @@ class ProjectRepository {
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body?.success == true && body.data != null) {
-                    Result.success(body.data.url)
+                    Result.success(body.data.project)
                 } else {
                     Result.failure(Exception(body?.error ?: "Failed to upload photo"))
                 }

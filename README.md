@@ -12,6 +12,30 @@ memorial-app/
   docs/             # Product spec, API docs, task tracking
 ```
 
+## Current MVP Status
+
+**Implemented:**
+- Android app shell with Jetpack Compose navigation
+- Photo Picker integration (deceased + living photos)
+- Backend API deployed on Railway (`https://memora-production-8d49.up.railway.app/`)
+- Postgres database with full project/user/purchase schema
+- Cloudflare R2 private bucket storage with signed URLs (15-min TTL)
+- Multipart photo upload to R2
+- Mock AI candidate generation (4 random images via picsum.photos)
+- Mock purchase verification with Google Play fallback logic
+- Generation status polling and candidate selection
+- Prompt optimizer endpoint (`/api/prompts/optimize`)
+- Contact/feedback endpoint (`/api/contact`)
+- Sentry error tracking (backend)
+
+**Not Yet Implemented:**
+- Real OpenAI `gpt-image-2` image generation
+- Real Android Google Play Billing integration
+- Video rendering pipeline (Remotion + FFmpeg)
+- Watermark and AI-generated labels on outputs
+- Complete privacy policy and account/data deletion closure
+- Real HD photo upscaling
+
 ## Prerequisites
 
 - **Android**: Android Studio (latest stable), JDK 17+
@@ -70,6 +94,7 @@ Each milestone targets a single verifiable goal. After each milestone:
 - **Image Gen**: OpenAI `gpt-image-2` via server-side only.
 - **Video**: Remotion + FFmpeg server-side; no on-device rendering.
 - **Payment**: Google Play Billing only; no Stripe or external checkout.
+- **Storage**: Cloudflare R2 private bucket with signed URLs; no public bucket access.
 
 ## License & Ethics
 

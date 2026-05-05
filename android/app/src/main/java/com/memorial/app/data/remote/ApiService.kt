@@ -22,25 +22,13 @@ interface ApiService {
     @GET("api/projects/{id}")
     suspend fun getProject(@Path("id") id: String): Response<ApiResponse<ProjectDto>>
 
-    @POST("api/projects/{id}/upload-url")
-    suspend fun getUploadUrl(
-        @Path("id") id: String,
-        @Body request: UploadUrlRequest
-    ): Response<ApiResponse<UploadUrlResponse>>
-
-    @POST("api/projects/{id}/confirm-upload")
-    suspend fun confirmUpload(
-        @Path("id") id: String,
-        @Body request: ConfirmUploadRequest
-    ): Response<ApiResponse<ProjectDto>>
-
     @Multipart
     @POST("api/projects/{id}/upload")
     suspend fun uploadPhoto(
         @Path("id") id: String,
         @Part photo: MultipartBody.Part,
         @Part("type") type: RequestBody
-    ): Response<ApiResponse<UploadResponse>>
+    ): Response<ApiResponse<UploadProjectResponse>>
 
     @POST("api/projects/{id}/generate")
     suspend fun generatePhoto(

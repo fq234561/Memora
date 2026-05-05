@@ -5,6 +5,10 @@
 - [~] In Progress
 - [x] Done
 
+## Repository Sync
+- [x] Local `main` matches GitHub `origin/main` at `69e8005` (2026-05-05 check)
+- [~] Local worktree has an uncommitted Android API base URL change for Railway testing
+
 ---
 
 ## Phase 1: Project Skeleton & Docs
@@ -55,23 +59,29 @@
 - [x] Repository layer (AuthRepository, ProjectRepository)
 - [x] TokenManager (SharedPreferences-based)
 - [x] Project creation flow (POST /api/projects)
-- [x] Upload confirmation flow (POST /api/projects/:id/confirm-upload)
+- [x] Multipart upload flow (POST /api/projects/:id/upload)
+- [~] Historical planning docs still mention the earlier signed-upload design
 - [x] Loading/error states in ViewModel + Screen
 - [x] Build check - BUILD SUCCESSFUL
-- [x] End-to-end flow verified (Login → Create Project → Photo Selection)
+- [x] End-to-end flow verified (Login -> Create Project -> Photo Selection)
 
 ## Phase 6: Image Generation Service (Framework)
 - [ ] OpenAI client wrapper
-- [ ] Generation job state machine
+- [x] Prompt optimization endpoint and prompt builder
+- [x] Mock generation endpoint with 4 candidate images
+- [x] Candidate selection endpoint
+- [x] Regeneration quota tracking and generation history
+- [~] Generation job state machine (status/progress/polling exists; no persistent queue/worker yet)
+- [~] HD asset access control (entitlement checks exist; HD output still mock URL)
 - [ ] Watermark logic framework
-- [ ] HD asset access control
-- [ ] Mock generation endpoint
 
 ## Phase 7: Google Play Billing (Framework)
 - [ ] Android Billing Library integration
-- [ ] Backend token verification endpoint
-- [ ] Idempotent order processing
-- [ ] Entitlement model
+- [x] Backend purchase creation endpoint
+- [x] Backend Google Play token verification path with mock fallback
+- [x] Idempotent order processing by purchase token
+- [x] Basic entitlement model for preview/full/HD unlock
+- [~] Android purchase screen wired to backend with mock purchase token
 
 ## Phase 8: Video Renderer (Framework)
 - [ ] Remotion project setup
@@ -80,8 +90,15 @@
 - [ ] CLI invocation
 
 ## Phase 9: Compliance & Polish
-- [ ] Data deletion flow
-- [ ] Report/feedback flow
-- [ ] AI-generated labels
+- [~] Data deletion flow (project delete endpoint exists; full asset cleanup/account deletion not complete)
+- [~] Report/feedback flow (backend contact endpoint exists; Settings UI action not wired)
+- [~] AI-generated labels (consent/product copy exists; output watermark/label rendering not complete)
 - [ ] Privacy policy draft
 - [ ] Play Console notes
+
+## Current Next Priorities
+- [ ] Replace mock image generation with server-side OpenAI image generation
+- [ ] Persist generation jobs in a queue/worker instead of in-process `setTimeout`
+- [ ] Implement watermarking and AI-generated labels on preview/HD assets
+- [ ] Integrate real Android Google Play Billing Library
+- [ ] Decide whether to archive or refresh older Chinese planning docs that reference retired API paths

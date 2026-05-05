@@ -88,11 +88,6 @@ export interface CreateProjectRequest {
   style: PhotoStyle;
 }
 
-export interface UploadUrlResponse {
-  uploadUrl: string;
-  fileKey: string;
-}
-
 export interface GenerateRequest {
   projectId: string;
 }

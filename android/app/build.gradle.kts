@@ -23,7 +23,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "true")
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://memora-production-8d49.up.railway.app/\"")
             buildConfigField("String", "LOG_LEVEL", "\"BODY\"")
         }
         release {

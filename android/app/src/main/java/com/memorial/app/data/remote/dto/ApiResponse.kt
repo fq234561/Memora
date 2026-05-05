@@ -47,20 +47,6 @@ data class CreateProjectRequest(
     @SerializedName("style") val style: String
 )
 
-data class UploadUrlRequest(
-    @SerializedName("type") val type: String
-)
-
-data class UploadUrlResponse(
-    @SerializedName("uploadUrl") val uploadUrl: String,
-    @SerializedName("fileKey") val fileKey: String
-)
-
-data class ConfirmUploadRequest(
-    @SerializedName("type") val type: String,
-    @SerializedName("fileKey") val fileKey: String
-)
-
 data class StatusResponse(
     @SerializedName("status") val status: String,
     @SerializedName("progress") val progress: Int? = null,
@@ -75,9 +61,8 @@ data class PurchaseRequest(
     @SerializedName("purchaseToken") val purchaseToken: String
 )
 
-data class UploadResponse(
-    @SerializedName("url") val url: String,
-    @SerializedName("fileName") val fileName: String
+data class UploadProjectResponse(
+    @SerializedName("project") val project: ProjectDto
 )
 
 data class PurchaseDto(
