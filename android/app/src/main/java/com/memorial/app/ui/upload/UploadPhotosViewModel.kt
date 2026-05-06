@@ -22,12 +22,6 @@ class UploadPhotosViewModel(
     private val _livingPhotoUri = MutableStateFlow<Uri?>(null)
     val livingPhotoUri: StateFlow<Uri?> = _livingPhotoUri
 
-    init {
-        // Dev auto-fill: pre-populate with mock URIs for faster testing
-        _deceasedPhotoUri.value = android.net.Uri.parse("content://media/external/images/media/1000000050")
-        _livingPhotoUri.value = android.net.Uri.parse("content://media/external/images/media/1000000051")
-    }
-
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
 

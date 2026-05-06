@@ -63,6 +63,7 @@ fun CreateProjectScreen(
     val title by viewModel.title.collectAsState()
     val selectedStyle by viewModel.selectedStyle.collectAsState()
     val isCreating by viewModel.isCreating.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         containerColor = BackgroundWarm
@@ -75,6 +76,24 @@ fun CreateProjectScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Error message
+            if (error != null) {
+                Text(
+                    text = error!!,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
+                            RoundedCornerShape(10.dp)
+                        )
+                        .padding(12.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Header
