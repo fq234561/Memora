@@ -96,9 +96,17 @@
 - [ ] Privacy policy draft
 - [ ] Play Console notes
 
+## Phase 10: Album & Advanced Features
+- [ ] Album 数据模型与 API
+- [ ] 按年月/活动类型/人物类型筛选项目
+- [ ] AI 自动识别分类（detectedTags）
+- [ ] PDF 纪念册导出
+- [ ] 翻页 MP4 视频生成
+
 ## Current Next Priorities
 - [ ] Replace mock image generation with server-side OpenAI image generation
 - [ ] Persist generation jobs in a queue/worker instead of in-process `setTimeout`
 - [ ] Implement watermarking and AI-generated labels on preview/HD assets
 - [ ] Integrate real Android Google Play Billing Library
 - [ ] Decide whether to archive or refresh older Chinese planning docs that reference retired API paths
+- [ ] Album 数据模型与 API（纪念册路线）

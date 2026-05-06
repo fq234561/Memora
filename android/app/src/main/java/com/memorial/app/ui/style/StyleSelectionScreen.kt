@@ -94,7 +94,7 @@ fun StyleSelectionScreen(
             }
 
             Text(
-                text = "选择一种最适合您纪念照的风格",
+                text = "选择一种最适合您家庭合照的风格",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -143,9 +143,10 @@ private fun StyleCard(
 ) {
     val (title, description) = when (style) {
         PhotoStyle.NATURAL_FAMILY -> "自然家庭照" to "温暖、自然的家庭风格合影"
-        PhotoStyle.VINTAGE_RESTORE -> "复古修复风" to "经典怀旧，仿佛时光倒流"
-        PhotoStyle.BIRTHDAY -> "生日纪念" to "再次庆祝那个特别的日子"
-        PhotoStyle.GRADUATION_WEDDING_HOLIDAY -> "特别场合" to "毕业、婚礼或节日场景"
+        PhotoStyle.TRAVEL_MEMORY -> "旅行回忆" to "把亲友自然融入旅途风景"
+        PhotoStyle.PARTY_GATHERING -> "派对聚会" to "生日、聚会等轻松欢乐场景"
+        PhotoStyle.HOLIDAY_CELEBRATION -> "节日庆典" to "节日团圆、温馨庆祝氛围"
+        PhotoStyle.MILESTONE_EVENT -> "重要时刻" to "婚礼、毕业、升学等人生里程碑"
     }
 
     val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else Color.White

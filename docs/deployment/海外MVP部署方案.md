@@ -222,8 +222,8 @@ CREATE TABLE projects (
     style VARCHAR(50) DEFAULT 'natural_family',
 
     -- R2 存储键（非公开 URL）
-    photo_deceased_storage_key TEXT,
-    photo_living_storage_key TEXT,
+    photo_person_storage_key TEXT,
+    photo_base_storage_key TEXT,
 
     status project_status DEFAULT 'draft',
     consent_given BOOLEAN DEFAULT FALSE,
@@ -312,7 +312,7 @@ CREATE INDEX idx_contact_messages_type ON contact_messages(type);
 | 字段 | SQLite（旧） | Postgres（新） | 说明 |
 |------|-------------|---------------|------|
 | `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` | 全局唯一，防枚举 |
-| `photo_deceased_url` | 本地文件路径 `./uploads/xxx.jpg` | `photo_deceased_storage_key` | 存储 R2 对象键，如 `raw/2026/05/xxx.jpg` |
+| `photo_person_url` | 本地文件路径 `./uploads/xxx.jpg` | `photo_person_storage_key` | 存储 R2 对象键，如 `raw/2026/05/xxx.jpg` |
 | `candidate_urls` | TEXT (JSON 数组) | `candidate_storage_keys TEXT[]` | Postgres 原生数组类型 |
 | `status` | TEXT 字符串 | `project_status` ENUM | 类型安全 |
 | `created_at` | INTEGER (Unix timestamp) | `TIMESTAMPTZ` | 时区安全 |
@@ -330,8 +330,8 @@ memora-uploads (Bucket)
 ├── raw/                          # 用户原始上传图（私有）
 │   └── {user_id}/
 │       └── {project_id}/
-│           ├── deceased_{timestamp}_{uuid}.jpg
-│           └── living_{timestamp}_{uuid}.jpg
+│           ├── person_{timestamp}_{uuid}.jpg
+│           └── base_{timestamp}_{uuid}.jpg
 │
 ├── previews/                     # AI 生成的 4 张候选预览图（私有）
 │   └── {project_id}/
@@ -363,7 +363,7 @@ memora-uploads (Bucket)
 // 上传用 Presigned PUT URL（有效期 15 分钟）
 const putCommand = new PutObjectCommand({
   Bucket: R2_BUCKET_NAME,
-  Key: `raw/${userId}/${projectId}/deceased_${timestamp}.jpg`,
+  Key: `raw/${userId}/${projectId}/person_${timestamp}.jpg`,
   ContentType: 'image/jpeg',
 });
 const uploadUrl = await getSignedUrl(s3Client, putCommand, {
@@ -373,7 +373,7 @@ const uploadUrl = await getSignedUrl(s3Client, putCommand, {
 // 下载用 Presigned GET URL（有效期 15 分钟）
 const getCommand = new GetObjectCommand({
   Bucket: R2_BUCKET_NAME,
-  Key: project.photo_deceased_storage_key,
+  Key: project.photo_person_storage_key,
 });
 const downloadUrl = await getSignedUrl(s3Client, getCommand, {
   expiresIn: 900,
@@ -386,15 +386,15 @@ const downloadUrl = await getSignedUrl(s3Client, getCommand, {
 {
   "project": {
     "id": "uuid",
-    "title": "给妈妈的纪念照",
+    "title": "给妈妈的家庭合照",
     "status": "preview_ready",
     "photos": {
-      "deceased": {
-        "storage_key": "raw/user-uuid/proj-uuid/deceased_1746230400_a1b2.jpg",
+      "base": {
+        "storage_key": "raw/user-uuid/proj-uuid/base_1746230400_a1b2.jpg",
         "signed_url": "https://images.yourdomain.com/raw/...?X-Amz-Algorithm=...&X-Amz-Expires=900",
         "expires_at": "2026-05-03T03:15:00Z"
       },
-      "living": { ... }
+      "person": { ... }
     },
     "candidates": [
       {

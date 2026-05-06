@@ -293,7 +293,7 @@ private fun PurchaseRequiredContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "准备生成纪念照",
+            text = "准备生成家庭合照",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -301,7 +301,7 @@ private fun PurchaseRequiredContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "购买预览套餐后，AI 将为您生成 4 张候选纪念照",
+            text = "购买预览套餐后，AI 将为您生成 4 张候选家庭合照",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary
             ),
@@ -366,7 +366,7 @@ private fun ReadyToGenerateContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "照片和风格偏好已准备好。现在生成 4 张 AI 候选纪念照。",
+            text = "照片和风格偏好已准备好。现在生成 4 张 AI 候选家庭合照。",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary
             ),
@@ -401,7 +401,7 @@ private fun GeneratingContent(progress: Int?) {
             CircularProgressIndicator(color = PrimaryPurple, modifier = Modifier.size(48.dp))
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "正在生成您的纪念照候选...",
+                "正在生成您的家庭合照候选...",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = TextPrimary,
                     fontWeight = FontWeight.Medium

@@ -21,8 +21,12 @@ export interface Project {
   userId: string;
   title: string;
   style: PhotoStyle;
+  /** @deprecated Legacy field name. Semantically now represents the "person" reference photo. Use personPhotoUrl. */
   deceasedPhotoUrl?: string;
+  /** @deprecated Legacy field name. Semantically now represents the "base" activity/group photo. Use basePhotoUrl. */
   livingPhotoUrl?: string;
+  basePhotoUrl?: string;
+  personPhotoUrl?: string;
   generatedPhotoUrl?: string;
   hdPhotoUrl?: string;
   status: ProjectStatus;
@@ -33,15 +37,21 @@ export interface Project {
   selectedCandidateIndex?: number;
   purchasedProductId?: string;
   generationHistory: GenerationHistoryEntry[];
+  eventDate?: string;
+  activityType?: ActivityType;
+  personTypes?: PersonType[];
+  detectedTags?: string[];
+  albumId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export enum PhotoStyle {
   NATURAL_FAMILY = 'NATURAL_FAMILY',
-  VINTAGE_RESTORE = 'VINTAGE_RESTORE',
-  BIRTHDAY = 'BIRTHDAY',
-  GRADUATION_WEDDING_HOLIDAY = 'GRADUATION_WEDDING_HOLIDAY',
+  TRAVEL_MEMORY = 'TRAVEL_MEMORY',
+  PARTY_GATHERING = 'PARTY_GATHERING',
+  HOLIDAY_CELEBRATION = 'HOLIDAY_CELEBRATION',
+  MILESTONE_EVENT = 'MILESTONE_EVENT',
 }
 
 export enum ProjectStatus {
@@ -86,6 +96,9 @@ export interface AuthRequest {
 export interface CreateProjectRequest {
   title: string;
   style: PhotoStyle;
+  eventDate?: string;
+  activityType?: ActivityType;
+  personTypes?: PersonType[];
 }
 
 export interface GenerateRequest {
@@ -111,4 +124,52 @@ export interface ContactRequest {
   email: string;
   message: string;
   projectId?: string;
+}
+
+export enum ActivityType {
+  TRAVEL = 'TRAVEL',
+  PARTY = 'PARTY',
+  HOLIDAY = 'HOLIDAY',
+  BIRTHDAY = 'BIRTHDAY',
+  WEDDING = 'WEDDING',
+  GRADUATION = 'GRADUATION',
+  REUNION = 'REUNION',
+  DAILY = 'DAILY',
+  OTHER = 'OTHER',
+}
+
+export enum PersonType {
+  PARENT = 'PARENT',
+  GRANDPARENT = 'GRANDPARENT',
+  CHILD = 'CHILD',
+  SIBLING = 'SIBLING',
+  PARTNER = 'PARTNER',
+  FRIEND = 'FRIEND',
+  RELATIVE = 'RELATIVE',
+  PET = 'PET',
+  OTHER = 'OTHER',
+}
+
+export interface Album {
+  id: string;
+  userId: string;
+  title: string;
+  projectIds: string[];
+  status: AlbumStatus;
+  pdfUrl?: string;
+  mp4Url?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum AlbumStatus {
+  DRAFT = 'DRAFT',
+  RENDERING = 'RENDERING',
+  READY = 'READY',
+  FAILED = 'FAILED',
+}
+
+export interface CreateAlbumRequest {
+  title: string;
+  projectIds: string[];
 }

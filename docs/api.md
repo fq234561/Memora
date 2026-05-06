@@ -69,8 +69,8 @@ List all projects for the authenticated user.
       "userId": "user_123",
       "title": "For Mom",
       "style": "NATURAL_FAMILY",
-      "deceasedPhotoUrl": "https://...",
-      "livingPhotoUrl": "https://...",
+      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field,兼容)
+      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field,兼容)
       "generatedPhotoUrl": null,
       "hdPhotoUrl": null,
       "status": "DRAFT",
@@ -90,7 +90,7 @@ List all projects for the authenticated user.
 
 ### POST /api/projects
 
-Create a new memorial project.
+Create a new memory project.
 
 **Request:**
 ```json
@@ -100,7 +100,7 @@ Create a new memorial project.
 }
 ```
 
-**`style` enum:** `NATURAL_FAMILY`, `VINTAGE_RESTORE`, `BIRTHDAY`, `GRADUATION_WEDDING_HOLIDAY`
+**`style` enum:** `NATURAL_FAMILY`, `TRAVEL_MEMORY`, `PARTY_GATHERING`, `HOLIDAY_CELEBRATION`, `MILESTONE_EVENT`
 
 **Response:** `201 Created` — same shape as a single project object in `GET /api/projects`.
 
@@ -116,7 +116,7 @@ Upload a photo file directly via multipart/form-data to R2 storage.
 
 **Request:** `multipart/form-data`
 - `photo` — image file (JPG, PNG, or WebP, max 20MB)
-- `type` — `"deceased"` or `"living"`
+- `type` — `"base"` or `"person"` (legacy values `"deceased"` and `"living"` are accepted for backward compatibility)
 
 **Response:**
 ```json
@@ -128,8 +128,8 @@ Upload a photo file directly via multipart/form-data to R2 storage.
       "userId": "user_123",
       "title": "For Mom",
       "style": "NATURAL_FAMILY",
-      "deceasedPhotoUrl": "https://...",
-      "livingPhotoUrl": "https://...",
+      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field,兼容)
+      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field,兼容)
       "generatedPhotoUrl": null,
       "hdPhotoUrl": null,
       "status": "UPLOADED",
@@ -146,7 +146,7 @@ Upload a photo file directly via multipart/form-data to R2 storage.
 }
 ```
 
-When both `deceased` and `living` photos are uploaded, `status` automatically changes to `UPLOADED`.
+When both `base` and `person` photos are uploaded, `status` automatically changes to `UPLOADED`.
 
 ### POST /api/projects/:id/consent
 
@@ -247,6 +247,10 @@ Create a purchase record (status `PENDING`, no entitlements granted yet).
 
 **`productId` values:** `preview_pack`, `hd_unlock`, `full_pack`
 
+- `preview_pack` — 低清水印预览生成
+- `hd_unlock` — 高清合照解锁
+- `full_pack` — 高清合照 + PDF 纪念册 + 翻页视频包
+
 **Response:** `201 Created` — Purchase object.
 
 ### POST /api/purchases/verify
@@ -278,10 +282,10 @@ Build a GPT Image 2 prompt from user inputs.
 **Request:**
 ```json
 {
-  "relationship": "mother",
-  "photoType": "portrait",
+  "activityType": "family gathering",
+  "personTypes": ["absent loved one", "family member"],
   "style": "NATURAL_FAMILY",
-  "userDescription": "optional description",
+  "eventContext": "optional context",
   "mood": "warm",
   "compositionPrefs": "optional preferences"
 }
@@ -295,12 +299,64 @@ Build a GPT Image 2 prompt from user inputs.
     "optimizedPrompt": "A warm natural family portrait of...",
     "negativePrompt": "blurry, distorted...",
     "stylePrompt": "natural lighting, soft focus...",
-    "safetyNotes": ["AI-generated memorial content"],
+    "safetyNotes": ["AI-generated family memory content"],
     "modelParams": {
       "size": "1024x1536",
       "quality": "high",
       "style": "vivid"
     }
+  }
+}
+```
+
+---
+
+## Albums
+
+All album endpoints require authentication.
+
+### POST /api/albums
+
+Create a new memory album.
+
+**Request:**
+```json
+{
+  "title": "Summer Trip 2026",
+  "projectIds": ["project_123", "project_124"],
+  "theme": "TRAVEL_MEMORY"
+}
+```
+
+**Response:** `201 Created` — Album object.
+
+### POST /api/albums/:id/render
+
+Create a PDF + MP4 generation task for the album.
+
+**Request:**
+```json
+{
+  "outputFormat": "pdf+mp4",
+  "includePageFlip": true
+}
+```
+
+**Response:** `202 Accepted` — Album object with `status: RENDERING`.
+
+### GET /api/albums/:id/status
+
+Check album export status and download URLs.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "RENDERING",
+    "progress": 35,
+    "pdfUrl": null,
+    "mp4Url": null
   }
 }
 ```
@@ -366,7 +422,7 @@ Liveness check for Railway and container platforms. No authentication required.
 | Status | Description |
 |--------|-------------|
 | `DRAFT` | Project created, photos not yet uploaded |
-| `UPLOADED` | Both deceased and living photos uploaded |
+| `UPLOADED` | Both base and person photos uploaded |
 | `GENERATING` | AI generation in progress |
 | `PREVIEW_READY` | Candidates generated, awaiting selection |
 | `PURCHASED` | Preview pack purchased, candidate selected, awaiting HD unlock |
@@ -391,4 +447,6 @@ Liveness check for Railway and container platforms. No authentication required.
 | `402` | Payment required (purchase verification needed) |
 | `403` | Access denied or consent/regeneration limit exceeded |
 | `404` | Project or purchase not found |
+| `500` | Server error |
+|
 | `500` | Server error |

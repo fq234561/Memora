@@ -10,10 +10,10 @@ const router = Router();
 
 router.use(authMiddleware);
 
-// POST /api/prompts/optimize â€?Build a GPT Image 2 prompt from user inputs
+// POST /api/prompts/optimize - Build an image generation prompt from user inputs
 router.post(
   '/optimize',
-  validateBody(['relationship', 'photoType', 'style']),
+  validateBody(['style']),
   (req: Request, res: Response) => {
     const body = req.body as PromptOptimizeRequest;
 

@@ -99,7 +99,7 @@ fun ConsentScreen(
             }
 
             Text(
-                text = "在生成纪念合照之前，请确认以下事项",
+                text = "在生成家庭合照之前，请确认以下事项",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -117,8 +117,8 @@ fun ConsentScreen(
             ConsentItemCard(
                 checked = privateUse,
                 onCheckedChange = { viewModel.togglePrivateUseOnly() },
-                title = "仅用于私人纪念",
-                description = "这张照片仅用于个人纪念用途，不用于商业目的"
+                title = "仅用于私人家庭纪念",
+                description = "这张照片仅用于个人/家庭纪念用途，不用于商业目的，也不冒充真实历史照片"
             )
 
             ConsentItemCard(

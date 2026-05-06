@@ -25,7 +25,7 @@ router.post('/google', validateBody(['idToken']), async (req: Request, res: Resp
     }
     googleId = 'mock-google-' + idToken.substring(0, 16);
     email = `user_${googleId.substring(0, 8)}@example.com`;
-    name = 'Memorial User';
+    name = 'Family User';
   } else {
     // Real Google Sign-In verification
     if (!env.GOOGLE_CLIENT_ID) {
@@ -43,7 +43,7 @@ router.post('/google', validateBody(['idToken']), async (req: Request, res: Resp
       }
       googleId = payload.sub;
       email = payload.email || `user_${googleId}@example.com`;
-      name = payload.name || 'Memorial User';
+      name = payload.name || 'Family User';
     } catch {
       throw new AppError(401, 'Google token verification failed');
     }

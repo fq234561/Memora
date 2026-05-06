@@ -140,7 +140,7 @@ fun PurchaseScreen(
             }
 
             Text(
-                text = "选择适合您的纪念照套餐",
+                text = "选择适合您的家庭合照套餐",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )

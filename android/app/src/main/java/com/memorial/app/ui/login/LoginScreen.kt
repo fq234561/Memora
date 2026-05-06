@@ -116,7 +116,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "上传照片，由 AI 为您生成一张\n温暖的纪念合照",
+                text = "上传照片，由 AI 帮您把缺席的亲友\n自然合入美好回忆",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextMuted,
                     lineHeight = 22.sp

@@ -98,14 +98,14 @@ fun CreateProjectScreen(
 
             // Header
             Text(
-                text = "创建纪念项目",
+                text = "创建家庭纪念合照",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
             )
             Text(
-                text = "为思念的人，制作一张温暖的纪念合照",
+                text = "把缺席的亲友自然合入美好回忆",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -127,7 +127,7 @@ fun CreateProjectScreen(
                 OutlinedTextField(
                     value = title,
                     onValueChange = viewModel::onTitleChange,
-                    placeholder = { Text("例如：给妈妈的纪念照") },
+                    placeholder = { Text("例如：全家旅行纪念、同学聚会补照") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
@@ -141,11 +141,11 @@ fun CreateProjectScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { viewModel.onTitleChange("Test Memorial") }
+                        .clickable { viewModel.onTitleChange("Test Family Memory") }
                         .padding(vertical = 4.dp)
                 ) {
                     Text(
-                        text = "使用测试标题",
+                        text = "使用测试标题 (Dev)",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = PrimaryPurple,
                             fontWeight = FontWeight.Medium
@@ -226,9 +226,10 @@ private fun StyleOptionCard(
 ) {
     val (title, description) = when (style) {
         PhotoStyle.NATURAL_FAMILY -> "自然家庭照" to "温暖、自然的家庭风格合影"
-        PhotoStyle.VINTAGE_RESTORE -> "复古修复风" to "经典怀旧，仿佛时光倒流"
-        PhotoStyle.BIRTHDAY -> "生日纪念" to "再次庆祝那个特别的日子"
-        PhotoStyle.GRADUATION_WEDDING_HOLIDAY -> "特别场合" to "毕业、婚礼或节日场景"
+        PhotoStyle.TRAVEL_MEMORY -> "旅行回忆" to "把亲友自然融入旅途风景"
+        PhotoStyle.PARTY_GATHERING -> "派对聚会" to "生日、聚会等轻松欢乐场景"
+        PhotoStyle.HOLIDAY_CELEBRATION -> "节日庆典" to "节日团圆、温馨庆祝氛围"
+        PhotoStyle.MILESTONE_EVENT -> "重要时刻" to "婚礼、毕业、升学等人生里程碑"
     }
 
     val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else CardSurface

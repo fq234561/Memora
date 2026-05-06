@@ -63,7 +63,7 @@ import com.memorial.app.ui.theme.TextSecondary
 import com.memorial.app.ui.theme.TrustGreen
 
 private enum class SelectingSlot {
-    NONE, DECEASED, LIVING
+    NONE, BASE, PERSON
 }
 
 @Composable
@@ -81,8 +81,8 @@ fun UploadPhotosScreen(
     )
 ) {
     val context = LocalContext.current
-    val deceasedPhotoUri by viewModel.deceasedPhotoUri.collectAsState()
-    val livingPhotoUri by viewModel.livingPhotoUri.collectAsState()
+    val basePhotoUri by viewModel.basePhotoUri.collectAsState()
+    val personPhotoUri by viewModel.personPhotoUri.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val validationError by viewModel.validationError.collectAsState()
     val uploadSuccess by viewModel.uploadSuccess.collectAsState()
@@ -93,8 +93,8 @@ fun UploadPhotosScreen(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         when (selectingFor) {
-            SelectingSlot.DECEASED -> viewModel.onDeceasedPhotoSelected(uri, context)
-            SelectingSlot.LIVING -> viewModel.onLivingPhotoSelected(uri, context)
+            SelectingSlot.BASE -> viewModel.onBasePhotoSelected(uri, context)
+            SelectingSlot.PERSON -> viewModel.onPersonPhotoSelected(uri, context)
             else -> {}
         }
         selectingFor = SelectingSlot.NONE
@@ -115,7 +115,7 @@ fun UploadPhotosScreen(
 
     // Dev auto-fill
     LaunchedEffect(Unit) {
-        if (deceasedPhotoUri != null && livingPhotoUri != null && !uploadSuccess) {
+        if (basePhotoUri != null && personPhotoUri != null && !uploadSuccess) {
             kotlinx.coroutines.delay(500)
             viewModel.uploadPhotos(context)
         }
@@ -163,7 +163,7 @@ fun UploadPhotosScreen(
             }
 
             Text(
-                text = "选择两张照片，AI 将为您合成一张温暖的纪念合照",
+                text = "选择照片，AI 将帮您补全一张完整的家庭合照",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -182,7 +182,7 @@ fun UploadPhotosScreen(
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "您的照片仅用于生成纪念合照，处理完成后将安全删除",
+                    text = "您的照片仅用于生成家庭合照，处理完成后将安全删除",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = TextMuted
                     )
@@ -196,11 +196,11 @@ fun UploadPhotosScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable {
-                        viewModel.onDeceasedPhotoSelected(
+                        viewModel.onBasePhotoSelected(
                             android.net.Uri.parse("content://media/external/images/media/1000000050"),
                             context
                         )
-                        viewModel.onLivingPhotoSelected(
+                        viewModel.onPersonPhotoSelected(
                             android.net.Uri.parse("content://media/external/images/media/1000000051"),
                             context
                         )
@@ -217,11 +217,11 @@ fun UploadPhotosScreen(
 
             // Photo slots
             PhotoSlotCard(
-                label = "思念的人",
-                subtitle = "选择您想念的那位亲人的照片",
-                photoUri = deceasedPhotoUri,
+                label = "活动底图",
+                subtitle = "选择活动现场的合照或风景照",
+                photoUri = basePhotoUri,
                 onSelect = {
-                    selectingFor = SelectingSlot.DECEASED
+                    selectingFor = SelectingSlot.BASE
                     pickPhoto.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -229,11 +229,11 @@ fun UploadPhotosScreen(
             )
 
             PhotoSlotCard(
-                label = "您或家人",
-                subtitle = "选择您自己或家人的照片",
-                photoUri = livingPhotoUri,
+                label = "补入人物",
+                subtitle = "选择要自然合入的亲友参考照片",
+                photoUri = personPhotoUri,
                 onSelect = {
-                    selectingFor = SelectingSlot.LIVING
+                    selectingFor = SelectingSlot.PERSON
                     pickPhoto.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -254,7 +254,7 @@ fun UploadPhotosScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(14.dp),
-                    enabled = deceasedPhotoUri != null && livingPhotoUri != null && !uploadSuccess,
+                    enabled = basePhotoUri != null && personPhotoUri != null && !uploadSuccess,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PrimaryPurple,
                         disabledContainerColor = DividerLight

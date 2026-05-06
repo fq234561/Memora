@@ -1,7 +1,12 @@
 export interface PromptOptimizeRequest {
   userDescription?: string;
-  relationship: string;
-  photoType: string;
+  /** @deprecated Use activityType instead */
+  relationship?: string;
+  /** @deprecated Use style (PhotoStyle) instead */
+  photoType?: string;
+  activityType?: string;
+  personTypes?: string[];
+  eventContext?: string;
   style: string;
   mood?: string;
   compositionPrefs?: string;

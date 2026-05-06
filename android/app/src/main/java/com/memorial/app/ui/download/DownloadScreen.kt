@@ -135,7 +135,7 @@ fun DownloadScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "您的纪念照",
+                    text = "您的家庭合照",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -152,7 +152,7 @@ fun DownloadScreen(
             }
 
             Text(
-                text = "AI 生成的纪念合照",
+                text = "AI 生成的家庭合照",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = TextMuted
                 ),
@@ -210,7 +210,7 @@ fun DownloadScreen(
                             photoUrl?.let { url ->
                                 AsyncImage(
                                     model = url,
-                                    contentDescription = "高清纪念照",
+                                    contentDescription = "高清家庭合照",
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(12.dp)),
@@ -221,7 +221,7 @@ fun DownloadScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("高清纪念照", textAlign = TextAlign.Center)
+                                    Text("高清家庭合照", textAlign = TextAlign.Center)
                                 }
                             }
                         }

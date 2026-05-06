@@ -1,24 +1,23 @@
-# AI 纪念合照 Android App MVP 计划
+# AI 家庭纪念合照 Android App MVP 计划
 
 ## 1. 产品概述
 
-本产品是一款面向国际用户的私密纪念类 Android App。它帮助成年失亲者通过上传自己与逝去亲人的照片，生成一张从未有机会拍摄的 AI 合照，并可进一步生成一段轻微动效纪念视频。
+本产品是一款面向国际用户的私密家庭纪念类 Android App。它帮助希望为家庭活动补全合照的用户通过上传活动/合照底图（现场照片）与要补入的人物参考照片，生成一张 AI 合照，并可进一步生成一段家庭纪念动效视频。
 
-产品的核心不是娱乐化 deepfake，而是帮助用户以温和、私密、可控的方式弥补遗憾。
+产品的核心不是娱乐化 deepfake，而是帮助用户以温和、私密、可控的方式为家庭活动补全合照。
 
 ### 核心定位
 
 - 产品形态：Android-first 原生 App
 - 首发平台：Google Play
-- 目标用户：成年失亲者
-- 核心能力：AI 合照生成 + 纪念相册式微动视频
+- 目标用户：希望为家庭活动补全合照的用户，包括旅行、派对、节日、婚礼、毕业、生日等场景
+- 核心能力：AI 合照生成 + 家庭纪念相册式微动视频
 - 收费方式：免费低清水印预览，付费解锁高清照片或高清照片 + 视频
 - 技术路线：Android 原生 Kotlin + 云端生成服务
 - 后期扩展：iOS SwiftUI App 复用同一套后端 API
 
 ### 不做的事情
 
-- 不做逝者说话
 - 不做语音克隆
 - 不做聊天机器人
 - 不做完整人物动作复现
@@ -33,18 +32,19 @@
 ### 用户主流程
 
 1. 用户打开 App，使用 Google 登录。
-2. 创建一个纪念项目。
+2. 创建一个家庭纪念项目。
 3. 通过 Android Photo Picker 选择照片：
-   - 逝去亲人的参考照片
-   - 用户本人或家庭成员照片
+   - 活动/合照底图（现场照片）
+   - 要补入的人物参考照片
 4. 选择合照风格：
-   - 自然家庭照
-   - 老照片修复风
-   - 生日纪念照
-   - 毕业/婚礼/节日场景
+   - 自然家庭照 (NATURAL_FAMILY)
+   - 旅行回忆 (TRAVEL_MEMORY)
+   - 聚会派对 (PARTY_GATHERING)
+   - 节日庆典 (HOLIDAY_CELEBRATION)
+   - 人生里程碑 (MILESTONE_EVENT)
 5. 勾选轻量授权声明：
    - 我有权使用上传的照片
-   - 该内容仅用于私人纪念
+   - 该内容仅用于私人家庭纪念
    - 我理解生成结果为 AI 生成
 6. 云端生成 2-4 张低清水印预览图。
 7. 用户选择满意版本。
@@ -158,7 +158,7 @@
 用户必须勾选：
 
 - I have the right to use these photos.
-- This is for private memorial use.
+- This is for private family memory use.
 - I understand the result is AI-generated.
 
 后端记录：
@@ -212,7 +212,7 @@ POST /projects
 ```json
 {
   "title": "For Mom",
-  "style": "natural_family_photo",
+  "style": "NATURAL_FAMILY",
   "locale": "en-US"
 }
 ```
@@ -267,7 +267,7 @@ POST /billing/google/verify
 ```json
 {
   "projectId": "project_123",
-  "productId": "memorial_photo_video_1",
+  "productId": "family_memory_album_bundle",
   "purchaseToken": "google_purchase_token"
 }
 ```
@@ -335,7 +335,7 @@ POST /reports
 
 ### projects
 
-存储纪念项目。
+存储家庭纪念项目。
 
 字段建议：
 
@@ -383,8 +383,8 @@ POST /reports
 
 资产类型：
 
-- deceased_reference
-- living_reference
+- base_reference（现场底图，旧字段 deceased_reference 兼容）
+- person_reference（要补入的人物参考照片，旧字段 living_reference 兼容）
 - preview_image
 - final_image
 - final_video
@@ -517,7 +517,7 @@ POST /reports
 
 Prompt 应强调：
 
-- private memorial photo
+- private family memory photo, natural group photo composition
 - natural family portrait
 - respectful, warm, realistic
 - preserve facial identity from references
@@ -555,9 +555,9 @@ Android App 不在本地生成最终视频，只负责：
 - 速度更慢
 - 身份漂移风险更高
 - 审核和伦理风险更高
-- 容易变成逝者复活动作或 deepfake
+- 容易变成人物动作复现或 deepfake
 
-第一版视频应保持在纪念相册式动效，不做人物复活。
+第一版视频应保持在家庭纪念相册式动效，不做人物复活。
 
 ### 视频规格
 
@@ -582,7 +582,7 @@ Android App 不在本地生成最终视频，只负责：
 - 轻微胶片颗粒
 - 轻微边缘虚化
 - 结尾淡出
-- 角落标注 AI-generated memorial video
+- 角落标注 AI-generated family memory video
 
 ### 生成流程
 
@@ -613,7 +613,7 @@ V1.5 可以增加：
 
 ### 推荐商品
 
-#### memorial_photo_hd_1
+#### family_memory_hd_unlock
 
 解锁一个项目的高清照片。
 
@@ -621,9 +621,9 @@ V1.5 可以增加：
 
 - USD 9.99
 
-#### memorial_photo_video_1
+#### family_memory_album_bundle
 
-解锁一个项目的高清照片 + 微动视频。
+解锁一个项目的高清照片 + 微动视频 + PDF 纪念册。
 
 建议价格：
 
@@ -659,7 +659,7 @@ V1.5 可以增加：
 第一版采用轻量规则：
 
 - 用户声明拥有照片使用权
-- 用户确认仅作私人纪念
+- 用户确认仅作私人家庭纪念
 - 用户理解结果为 AI 生成
 - 输出标注 AI-generated
 - 提供项目删除入口
@@ -675,7 +675,7 @@ V1.5 可以增加：
 - 仇恨、骚扰、欺骗性内容
 - 未经同意的现实人物冒充
 - 儿童目标市场
-- 逝者说话、语音克隆、聊天复现
+- 不做公开广场
 
 ### 数据保留
 
@@ -782,6 +782,14 @@ V1.5 可以增加：
 - 测试账号
 - 内测发布
 
+### Milestone 5.5：高级纪念册（Album）
+
+- 多项目相册汇总
+- PDF 纪念册排版导出
+- 翻页 MP4 视频生成
+- 按年月/活动类型/人物筛选
+- 纪念册购买包 family_memory_album_bundle
+
 ---
 
 ## 13. 关键决策总结
@@ -794,5 +802,5 @@ V1.5 可以增加：
 - 支付用 Google Play Billing，不在 App 内使用 Stripe。
 - 免费预览采用低清水印图。
 - 付费解锁高清照片和 MP4 视频。
-- 产品定位为私密纪念，不做逝者复活、说话、聊天或完整 deepfake 视频。
+- 产品定位为私密家庭纪念，不做人物复活、说话、聊天或完整 deepfake 视频。
 

@@ -19,7 +19,7 @@ object MockData {
     val mockProjects = listOf(
         Project(
             id = "project_001",
-            title = "For Mom",
+            title = "Family Trip",
             style = PhotoStyle.NATURAL_FAMILY,
             status = ProjectStatus.FINAL_READY,
             createdAt = "2026-04-28T10:00:00Z",
@@ -27,8 +27,8 @@ object MockData {
         ),
         Project(
             id = "project_002",
-            title = "Dad's Birthday",
-            style = PhotoStyle.BIRTHDAY,
+            title = "Birthday Party",
+            style = PhotoStyle.PARTY_GATHERING,
             status = ProjectStatus.PREVIEW_READY,
             createdAt = "2026-04-29T14:00:00Z",
             updatedAt = "2026-04-29T14:30:00Z"
@@ -39,7 +39,7 @@ object MockData {
         Asset(
             id = "asset_001",
             projectId = "project_001",
-            type = AssetType.DECEASED_REFERENCE,
+            type = AssetType.PERSON_REFERENCE,
             url = null,
             width = 1024,
             height = 1024,

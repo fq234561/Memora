@@ -208,7 +208,7 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Create Memorial Photo",
+                        contentDescription = "Create Family Memory Photo",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
                     )
@@ -240,7 +240,7 @@ private fun BrandHeader(
                 )
             )
             Text(
-                text = "与思念的人，再合一张照",
+                text = "把缺席的亲友，带回珍贵瞬间",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = TextMuted,
                     fontSize = 12.sp
@@ -302,14 +302,14 @@ private fun CreateProjectCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "创建新的纪念项目",
+                        text = "创建新的家庭合照",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     )
                     Text(
-                        text = "上传照片，生成专属纪念合照",
+                        text = "上传活动照片与亲友参考图，AI 帮你自然补全",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -438,11 +438,11 @@ private fun ProjectCard(
                 val actionText = when (project.status) {
                     ProjectStatus.DRAFT -> "继续上传照片"
                     ProjectStatus.UPLOADED ->
-                        if (project.purchasedProductId != null) "生成 AI 预览" else "购买预览套餐"
+                        if (project.purchasedProductId != null) "生成 AI 合照预览" else "购买预览套餐"
                     ProjectStatus.GENERATING -> "正在生成中..."
                     ProjectStatus.PREVIEW_READY -> "选择最喜欢的版本"
-                    ProjectStatus.PURCHASED -> "解锁高清照片"
-                    ProjectStatus.COMPLETED -> "下载高清照片"
+                    ProjectStatus.PURCHASED -> "解锁高清合照"
+                    ProjectStatus.COMPLETED -> "下载高清合照"
                     ProjectStatus.FAILED -> "重新生成"
                     else -> "查看详情"
                 }
@@ -587,7 +587,7 @@ private fun EmptyState(
         }
 
         Text(
-            text = "还没有纪念项目",
+            text = "还没有家庭合照",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = TextPrimary
@@ -595,7 +595,7 @@ private fun EmptyState(
         )
 
         Text(
-            text = "上传亲人的照片，让 AI 帮您生成一张\n温暖的纪念合照",
+            text = "上传活动照片和亲友参考图，让 AI 帮您\n补全一张完整的家庭合照",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary,
                 lineHeight = 22.sp
@@ -619,7 +619,7 @@ private fun EmptyState(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "开始第一张纪念照片",
+                text = "开始第一张家庭合照",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White

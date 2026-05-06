@@ -43,10 +43,12 @@ async function resolvePhotoUrl(key: string | undefined): Promise<string | undefi
 }
 
 // Helper: add signed URLs to project response
+// Note: DB schema still uses deceased_photo_key / living_photo_key.
+// Semantically these now map to personPhotoUrl (person to include) and basePhotoUrl (activity/group photo).
 async function resolveProjectUrls(project: Project): Promise<Project> {
-  const [deceasedPhotoUrl, livingPhotoUrl, generatedPhotoUrl, hdPhotoUrl] = await Promise.all([
-    resolvePhotoUrl(project.deceasedPhotoUrl),
-    resolvePhotoUrl(project.livingPhotoUrl),
+  const [basePhotoUrl, personPhotoUrl, generatedPhotoUrl, hdPhotoUrl] = await Promise.all([
+    resolvePhotoUrl(project.basePhotoUrl || project.livingPhotoUrl),
+    resolvePhotoUrl(project.personPhotoUrl || project.deceasedPhotoUrl),
     resolvePhotoUrl(project.generatedPhotoUrl),
     resolvePhotoUrl(project.hdPhotoUrl),
   ]);
@@ -58,8 +60,10 @@ async function resolveProjectUrls(project: Project): Promise<Project> {
 
   return {
     ...project,
-    deceasedPhotoUrl,
-    livingPhotoUrl,
+    basePhotoUrl,
+    personPhotoUrl,
+    livingPhotoUrl: basePhotoUrl,
+    deceasedPhotoUrl: personPhotoUrl,
     generatedPhotoUrl,
     hdPhotoUrl,
     candidateUrls,
@@ -68,7 +72,7 @@ async function resolveProjectUrls(project: Project): Promise<Project> {
 
 // POST /api/projects - Create a new project
 router.post('/', validateBody(['title', 'style']), async (req: Request, res: Response) => {
-  const { title, style } = req.body as CreateProjectRequest;
+  const { title, style, eventDate, activityType, personTypes } = req.body as CreateProjectRequest;
   const userId = req.user!.id;
 
   const project: Project = {
@@ -81,6 +85,9 @@ router.post('/', validateBody(['title', 'style']), async (req: Request, res: Res
     regenerationCount: 0,
     regenerationLimit: 0,
     generationHistory: [],
+    eventDate,
+    activityType,
+    personTypes,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -96,6 +103,7 @@ router.post('/', validateBody(['title', 'style']), async (req: Request, res: Res
 });
 
 // GET /api/projects - List user's projects
+// TODO: future support for filtering by year/month/activityType/personType
 router.get('/', async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const projects = await store.getProjectsByUser(userId);
@@ -149,8 +157,8 @@ router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Res
     throw new AppError(400, 'No file uploaded');
   }
 
-  if (!type || !['deceased', 'living'].includes(type)) {
-    throw new AppError(400, 'Invalid upload type. Must be "deceased" or "living"');
+  if (!type || !['base', 'person', 'living', 'deceased'].includes(type)) {
+    throw new AppError(400, 'Invalid upload type. Must be "base" or "person" (legacy "living"/"deceased" still accepted)');
   }
 
   // Upload to R2
@@ -161,10 +169,13 @@ router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Res
   await uploadFile(key, req.file.buffer, req.file.mimetype);
 
   const updates: Partial<Project> = {};
-  if (type === 'deceased') {
-    updates.deceasedPhotoUrl = key;
-  } else {
-    updates.livingPhotoUrl = key;
+  const isBase = type === 'base' || type === 'living';
+  const isPerson = type === 'person' || type === 'deceased';
+
+  if (isBase) {
+    updates.basePhotoUrl = key;
+  } else if (isPerson) {
+    updates.personPhotoUrl = key;
   }
 
   // Auto-update status if both photos uploaded
@@ -172,10 +183,10 @@ router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Res
   if (!currentProject) {
     throw new AppError(404, 'Project not found');
   }
-  const hasDeceased = type === 'deceased' ? true : !!currentProject.deceasedPhotoUrl;
-  const hasLiving = type === 'living' ? true : !!currentProject.livingPhotoUrl;
+  const hasBase = isBase ? true : !!currentProject.basePhotoUrl || !!currentProject.livingPhotoUrl;
+  const hasPerson = isPerson ? true : !!currentProject.personPhotoUrl || !!currentProject.deceasedPhotoUrl;
 
-  if (hasDeceased && hasLiving) {
+  if (hasBase && hasPerson) {
     updates.status = ProjectStatus.UPLOADED;
   }
 
@@ -262,8 +273,8 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
           style: project.style,
           customPrompt,
           adjustmentPrompt,
-          deceasedPhotoUrl: project.deceasedPhotoUrl,
-          livingPhotoUrl: project.livingPhotoUrl,
+          basePhotoUrl: project.basePhotoUrl || project.livingPhotoUrl,
+          personPhotoUrl: project.personPhotoUrl || project.deceasedPhotoUrl,
           isRegeneration,
         });
 

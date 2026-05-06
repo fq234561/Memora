@@ -14,6 +14,7 @@ import purchaseRoutes from './routes/purchases';
 import contactRoutes from './routes/contact';
 import healthRoutes from './routes/health';
 import promptRoutes from './routes/prompts';
+import albumRoutes from './routes/albums';
 
 export function createApp(): Application {
   const app = express();
@@ -39,11 +40,12 @@ export function createApp(): Application {
   app.use('/api/contact', contactRoutes);
   app.use('/api/health', healthRoutes);
   app.use('/api/prompts', promptRoutes);
+  app.use('/api/albums', albumRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {
     res.json({
-      name: 'Memorial Photo API',
+      name: 'Family Memory Photo API',
       version: '1.0.0',
       environment: env.NODE_ENV,
       documentation: '/api/health',

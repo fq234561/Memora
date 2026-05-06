@@ -3,8 +3,8 @@ export interface GenerationInput {
   style: string;
   customPrompt?: string;
   adjustmentPrompt?: string;
-  deceasedPhotoUrl?: string;
-  livingPhotoUrl?: string;
+  basePhotoUrl?: string;
+  personPhotoUrl?: string;
   isRegeneration?: boolean;
 }
 

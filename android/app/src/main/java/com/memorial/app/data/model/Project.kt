@@ -17,9 +17,10 @@ data class Project(
 
 enum class PhotoStyle {
     NATURAL_FAMILY,
-    VINTAGE_RESTORE,
-    BIRTHDAY,
-    GRADUATION_WEDDING_HOLIDAY
+    TRAVEL_MEMORY,
+    PARTY_GATHERING,
+    HOLIDAY_CELEBRATION,
+    MILESTONE_EVENT
 }
 
 enum class ProjectStatus {
@@ -52,8 +53,8 @@ data class Asset(
 )
 
 enum class AssetType {
-    DECEASED_REFERENCE,
-    LIVING_REFERENCE,
+    BASE_REFERENCE,
+    PERSON_REFERENCE,
     PREVIEW_IMAGE,
     FINAL_IMAGE,
     FINAL_VIDEO,

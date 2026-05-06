@@ -1,6 +1,6 @@
-# AI Memorial Photo App
+# Memora — Family Memory Photo App
 
-An Android-first app that helps users create AI-composed memorial photos with deceased loved ones. Optional gentle animated memorial video.
+An Android-first app that helps users create AI-composed family memory photos with absent loved ones. Optional gentle animated family memory video.
 
 ## Project Structure
 
@@ -16,7 +16,7 @@ memorial-app/
 
 **Implemented:**
 - Android app shell with Jetpack Compose navigation
-- Photo Picker integration (deceased + living photos)
+- Photo Picker integration (base scene + person reference photos)
 - Backend API deployed on Railway (`https://memora-production-8d49.up.railway.app/`)
 - Postgres database with full project/user/purchase schema
 - Cloudflare R2 private bucket storage with signed URLs (15-min TTL)
@@ -98,4 +98,4 @@ Each milestone targets a single verifiable goal. After each milestone:
 
 ## License & Ethics
 
-This is a private memorial tool. All outputs are labeled AI-generated. No talking, voice cloning, or public sharing features.
+This is a private family memory tool. All outputs are labeled AI-generated. No impersonation of public figures, no deceptive content, no posing as real historical photos.

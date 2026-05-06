@@ -48,10 +48,22 @@ export async function initDatabase(): Promise<void> {
       candidate_keys JSONB,
       selected_candidate_index INTEGER,
       purchased_product_id TEXT,
+      event_date TEXT,
+      activity_type TEXT,
+      person_types JSONB,
+      detected_tags JSONB,
+      album_id TEXT,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL
     )
   `);
+
+  // Migration: add new columns to existing projects table safely
+  await db.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS event_date TEXT`);
+  await db.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS activity_type TEXT`);
+  await db.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS person_types JSONB`);
+  await db.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS detected_tags JSONB`);
+  await db.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS album_id TEXT`);
 
   // Purchases table
   await db.query(`
@@ -81,6 +93,21 @@ export async function initDatabase(): Promise<void> {
     )
   `);
 
+  // Albums table
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS albums (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      project_ids JSONB NOT NULL,
+      status TEXT NOT NULL DEFAULT 'DRAFT',
+      pdf_key TEXT,
+      mp4_key TEXT,
+      created_at TIMESTAMPTZ NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    )
+  `);
+
   // Contact messages table
   await db.query(`
     CREATE TABLE IF NOT EXISTS contact_messages (
@@ -97,9 +124,12 @@ export async function initDatabase(): Promise<void> {
   // Indexes
   await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_album ON projects(album_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_activity ON projects(activity_type)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_purchases_project ON purchases(project_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_purchases_token ON purchases(purchase_token)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_generation_project ON generation_history(project_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_albums_user ON albums(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_user ON contact_messages(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_type ON contact_messages(type)`);
 }

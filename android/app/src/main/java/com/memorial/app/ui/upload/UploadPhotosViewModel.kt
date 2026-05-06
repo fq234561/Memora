@@ -16,11 +16,11 @@ class UploadPhotosViewModel(
 
     private val repository = ProjectRepository()
 
-    private val _deceasedPhotoUri = MutableStateFlow<Uri?>(null)
-    val deceasedPhotoUri: StateFlow<Uri?> = _deceasedPhotoUri
+    private val _basePhotoUri = MutableStateFlow<Uri?>(null)
+    val basePhotoUri: StateFlow<Uri?> = _basePhotoUri
 
-    private val _livingPhotoUri = MutableStateFlow<Uri?>(null)
-    val livingPhotoUri: StateFlow<Uri?> = _livingPhotoUri
+    private val _personPhotoUri = MutableStateFlow<Uri?>(null)
+    val personPhotoUri: StateFlow<Uri?> = _personPhotoUri
 
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
@@ -38,23 +38,23 @@ class UploadPhotosViewModel(
         private val ALLOWED_MIME_TYPES = setOf("image/jpeg", "image/png", "image/webp")
     }
 
-    fun onDeceasedPhotoSelected(uri: Uri?, context: Context?) {
+    fun onBasePhotoSelected(uri: Uri?, context: Context?) {
         val error = validateImage(uri, context)
         if (error != null) {
             _validationError.value = error
             return
         }
-        _deceasedPhotoUri.value = uri
+        _basePhotoUri.value = uri
         _validationError.value = null
     }
 
-    fun onLivingPhotoSelected(uri: Uri?, context: Context?) {
+    fun onPersonPhotoSelected(uri: Uri?, context: Context?) {
         val error = validateImage(uri, context)
         if (error != null) {
             _validationError.value = error
             return
         }
-        _livingPhotoUri.value = uri
+        _personPhotoUri.value = uri
         _validationError.value = null
     }
 
@@ -63,10 +63,10 @@ class UploadPhotosViewModel(
     }
 
     fun uploadPhotos(context: Context) {
-        val deceasedUri = _deceasedPhotoUri.value
-        val livingUri = _livingPhotoUri.value
+        val baseUri = _basePhotoUri.value
+        val personUri = _personPhotoUri.value
 
-        if (deceasedUri == null || livingUri == null) {
+        if (baseUri == null || personUri == null) {
             _validationError.value = "Please select both photos"
             return
         }
@@ -75,18 +75,18 @@ class UploadPhotosViewModel(
             _isUploading.value = true
             _validationError.value = null
 
-            // Upload deceased photo
-            val deceasedResult = repository.uploadPhotoFile(projectId, "deceased", deceasedUri, context)
-            if (deceasedResult.isFailure) {
-                _validationError.value = formatError(deceasedResult.exceptionOrNull())
+            // Upload base photo
+            val baseResult = repository.uploadPhotoFile(projectId, "base", baseUri, context)
+            if (baseResult.isFailure) {
+                _validationError.value = formatError(baseResult.exceptionOrNull())
                 _isUploading.value = false
                 return@launch
             }
 
-            // Upload living photo
-            val livingResult = repository.uploadPhotoFile(projectId, "living", livingUri, context)
-            if (livingResult.isFailure) {
-                _validationError.value = formatError(livingResult.exceptionOrNull())
+            // Upload person photo
+            val personResult = repository.uploadPhotoFile(projectId, "person", personUri, context)
+            if (personResult.isFailure) {
+                _validationError.value = formatError(personResult.exceptionOrNull())
                 _isUploading.value = false
                 return@launch
             }
