@@ -1,268 +1,391 @@
-# AI 家庭纪念合照 Android App MVP 计划
+# AI Family Memory Photo App - Android MVP Plan
 
-## 1. 产品概述
+## 1. Product Overview
 
-本产品是一款面向国际用户的私密家庭纪念类 Android App。它帮助希望为家庭活动补全合照的用户通过上传活动/合照底图（现场照片）与要补入的人物参考照片，生成一张 AI 合照，并可进一步生成一段家庭纪念动效视频。
+This product is an Android-first AI Family Memory Photo App for international users. It helps families complete meaningful group photos when relatives or close friends could not be present at a trip, party, holiday, wedding, graduation, birthday, reunion, or other milestone event.
 
-产品的核心不是娱乐化 deepfake，而是帮助用户以温和、私密、可控的方式为家庭活动补全合照。
+Users upload an event/base photo and one or more person reference photos. The app generates natural AI-assisted family memory photos, then can optionally generate a family album package such as a PDF photo book or a short page-turn MP4.
 
-### 核心定位
+The product is not positioned as entertainment deepfake software. It is a private, consent-based, family-memory tool with clear AI-generated disclosure and data deletion controls.
 
-- 产品形态：Android-first 原生 App
-- 首发平台：Google Play
-- 目标用户：希望为家庭活动补全合照的用户，包括旅行、派对、节日、婚礼、毕业、生日等场景
-- 核心能力：AI 合照生成 + 家庭纪念相册式微动视频
-- 收费方式：免费低清水印预览，付费解锁高清照片或高清照片 + 视频
-- 技术路线：Android 原生 Kotlin + 云端生成服务
-- 后期扩展：iOS SwiftUI App 复用同一套后端 API
+### Core Positioning
 
-### 不做的事情
+- Product category: AI Family Memory Photo App.
+- First platform: Android native app for Google Play.
+- Target users: adults who want to complete private family, travel, party, holiday, reunion, graduation, wedding, birthday, or milestone photos.
+- Core capability: AI group-photo completion, organized memory management, and optional album generation.
+- Monetization: free low-resolution watermarked previews, paid HD photo unlock, and optional HD photo + album/video bundle.
+- Tech direction: Kotlin + Jetpack Compose Android app, TypeScript backend, cloud storage, image generation service, and server-side album/video rendering.
+- Future expansion: iOS SwiftUI app reusing the same backend API.
 
-- 不做语音克隆
-- 不做聊天机器人
-- 不做完整人物动作复现
-- 不做公众人物/名人营销案例
-- 不做公开作品广场
-- 不把生成结果包装成真实历史照片
+### Non-Goals
 
----
-
-## 2. MVP 功能范围
-
-### 用户主流程
-
-1. 用户打开 App，使用 Google 登录。
-2. 创建一个家庭纪念项目。
-3. 通过 Android Photo Picker 选择照片：
-   - 活动/合照底图（现场照片）
-   - 要补入的人物参考照片
-4. 选择合照风格：
-   - 自然家庭照 (NATURAL_FAMILY)
-   - 旅行回忆 (TRAVEL_MEMORY)
-   - 聚会派对 (PARTY_GATHERING)
-   - 节日庆典 (HOLIDAY_CELEBRATION)
-   - 人生里程碑 (MILESTONE_EVENT)
-5. 勾选轻量授权声明：
-   - 我有权使用上传的照片
-   - 该内容仅用于私人家庭纪念
-   - 我理解生成结果为 AI 生成
-6. 云端生成 2-4 张低清水印预览图。
-7. 用户选择满意版本。
-8. 通过 Google Play Billing 购买：
-   - 高清照片
-   - 高清照片 + 微动视频
-9. 付费成功后，云端生成高清照片和可选 MP4 视频。
-10. 用户在 App 内下载、保存或分享结果。
-
-### 免费与付费边界
-
-免费用户可以：
-
-- 上传照片
-- 选择风格
-- 生成低清水印预览
-- 删除项目和上传数据
-
-付费用户可以：
-
-- 下载高清无大水印照片
-- 下载纪念微动视频
-- 在项目历史中重新访问已购买结果
+- No voice cloning.
+- No chatbot.
+- No talking portrait.
+- No full-body motion reenactment.
+- No celebrity or public-figure use cases.
+- No public gallery.
+- No claim that AI output is a real historical photo.
+- No direct client-side access to image-generation API keys.
 
 ---
 
-## 3. 推荐技术架构
+## 2. MVP Feature Scope
 
-### 客户端
+### Main User Flow
 
-推荐使用：
+1. User opens the app and signs in with Google.
+2. User creates a family memory project.
+3. User adds basic organization metadata:
+   - Event date.
+   - Activity type.
+   - Person type.
+4. User selects photos with Android Photo Picker:
+   - Event/base photo, such as a trip, party, family table, ceremony, or group scene.
+   - Person reference photo for the person to be added.
+5. User chooses a photo style:
+   - Natural Family.
+   - Travel Memory.
+   - Party Gathering.
+   - Holiday Celebration.
+   - Milestone Event.
+6. User accepts lightweight consent:
+   - I have the right to use these photos.
+   - This is for private family memory use.
+   - I understand the result is AI-generated.
+7. Backend generates 2-4 low-resolution watermarked previews.
+8. User selects a preferred preview.
+9. User unlocks one of the paid products through Google Play Billing:
+   - HD photo.
+   - HD photo + album/video bundle.
+10. Backend generates final HD assets and optional album/video output.
+11. User downloads, saves, or shares the generated result.
 
-- Kotlin
-- Jetpack Compose
-- Navigation Compose
-- MVVM
-- Kotlin Coroutines / Flow
-- Google Sign-In
-- Google Play Billing
-- Android Photo Picker
+### Photo Organization
 
-选择原生 Kotlin 的原因：
+The MVP should include basic photo organization because the product is centered on family memory management, not only one-off generation.
 
-- Google Play Billing 集成最稳定
-- 相册权限和 Photo Picker 体验最好
-- 后台上传、下载、系统分享能力成熟
-- 长期上架 Google Play 更稳
-- 后期 iOS 可用 SwiftUI 单独开发，复用后端
+- Projects can be managed by year and month.
+- Projects can be managed by activity type.
+- Projects can be managed by person type.
+- The first version uses manual user selection.
+- `detectedTags` is reserved for later AI-assisted suggestions and should not block manual editing.
+- Home should expose compact filters for year/month, activity type, and person type.
+- Albums can be created from selected projects or from the current filtered set.
 
-### 后端
+### Free and Paid Boundaries
 
-推荐使用：
+Free users can:
 
-- Supabase Auth / Postgres / Storage
-- 独立 Node.js / TypeScript Worker
-- Cloudflare R2 或 Supabase Storage 存储图片和视频
-- 队列系统处理生成任务
-- OpenAI `gpt-image-2` 生成/编辑合照
-- Remotion + FFmpeg 生成微动视频
+- Create projects.
+- Upload selected photos.
+- Choose style and organization metadata.
+- Generate low-resolution watermarked previews.
+- Delete projects and uploaded data.
 
-后端需要承担：
+Paid users can:
 
-- 用户鉴权
-- 上传签名 URL
-- 项目和资产管理
-- 调用 OpenAI 图片模型
-- 生成视频
-- 校验 Google Play purchase token
-- 发放下载权限
-- 数据删除
-- 任务重试和失败记录
+- Download HD photos.
+- Download optional album/video package.
+- Revisit purchased outputs from project history while retained.
 
 ---
 
-## 4. Android App 页面结构
+## 3. Visual Design Direction
 
-### 主要页面
+The MVP should use Kimi Option B: Natural Photo.
 
-- 登录页
-- 首页/项目列表页
-- 创建项目页
-- 照片上传页
-- 风格选择页
-- 授权声明页
-- 生成进度页
-- 预览选择页
-- 购买页
-- 下载结果页
-- 项目历史页
-- 设置页
-- 数据删除页
-- 反馈/举报页
+### Design Mood
 
-### 页面说明
+- Calm family-album feeling.
+- Warm, natural, and international.
+- Avoid a heavy purple or somber visual tone.
+- Prioritize real photo surfaces, clean filters, and practical project management.
 
-#### 登录页
+### Suggested Palette
 
-- 使用 Google 登录
-- 登录后由后端签发 App session
-- 后续所有 API 请求携带 session token
+- Background: warm off-white.
+- Surface: white.
+- Primary: film green.
+- Primary soft: light sage.
+- Accent: soft warm amber.
+- Text primary: charcoal.
+- Text secondary: muted gray-green.
+- Divider: warm neutral.
 
-#### 照片上传页
+### UI Principles
 
-- 使用 Android Photo Picker
-- 不请求全相册权限
-- 用户只授权 App 访问自己选择的图片
-- 上传前可做本地压缩和尺寸检查
+- Use compact filters and clear cards instead of decorative landing-page sections.
+- Use natural photo thumbnails as the main visual signal.
+- Use low-radius cards and restrained shadows.
+- Keep controls practical: chips for activity/person type, segmented controls for filters, icon buttons for actions, and clear CTAs for generation and downloads.
+- Do not use in-app text that explains the visual style or design concept.
 
-#### 授权声明页
+### Core Screens
 
-用户必须勾选：
+- Home: project list, latest projects, year/month filters, activity filters, person filters, and album entry.
+- Create Project: title, event date, activity type, person type, and style selection.
+- Upload Photos: event/base photo and person reference photo.
+- Consent: rights, private family use, and AI-generated disclosure.
+- Preview: 2-4 watermarked preview choices.
+- Download: HD photo, optional album/video status, save, and share.
+- Albums: create album from selected projects or current filters, render status, PDF/MP4 download when ready.
+
+---
+
+## 4. Recommended Technical Architecture
+
+### Android Client
+
+Recommended stack:
+
+- Kotlin.
+- Jetpack Compose.
+- Navigation Compose.
+- MVVM.
+- Kotlin Coroutines and Flow.
+- Google Sign-In.
+- Google Play Billing.
+- Android Photo Picker.
+
+Why native Android first:
+
+- Best Google Play Billing integration.
+- Best Photo Picker and storage permission behavior.
+- Mature background upload, download, and sharing capabilities.
+- Easier Google Play compliance.
+- Future iOS app can reuse backend APIs while using native SwiftUI.
+
+### Backend
+
+Recommended stack:
+
+- TypeScript backend service.
+- Postgres for relational data.
+- Cloud storage for uploaded photos and generated assets.
+- Queue or job system for generation tasks.
+- Image-generation provider abstraction.
+- Remotion + FFmpeg or equivalent server-side renderer for album/video output.
+
+Backend responsibilities:
+
+- Authentication and session validation.
+- Signed upload URLs.
+- Project and asset management.
+- Image-generation orchestration.
+- Album and video rendering.
+- Google Play purchase-token verification.
+- Download entitlement checks.
+- Data deletion.
+- Job retry and failure tracking.
+
+---
+
+## 5. Android App Structure
+
+### Main Screens
+
+- Sign In.
+- Home / Project List.
+- Create Project.
+- Upload Photos.
+- Style Selection.
+- Consent.
+- Generation Progress.
+- Preview Selection.
+- Purchase.
+- Download Result.
+- Project History.
+- Albums.
+- Settings.
+- Data Deletion.
+- Feedback / Report.
+
+### Key Screen Notes
+
+#### Sign In
+
+- Use Google Sign-In.
+- Backend validates Google token.
+- Backend returns app session.
+- Later API calls include the app session token.
+
+#### Create Project
+
+- User enters a project title.
+- User selects event date.
+- User selects activity type.
+- User selects one or more person types.
+- User selects photo style.
+
+#### Upload Photos
+
+- Use Android Photo Picker.
+- Do not request full gallery permission.
+- Compress and validate selected images before upload when needed.
+- Use these labels:
+  - Event Photo.
+  - Person Reference Photo.
+
+#### Consent
+
+User must accept:
 
 - I have the right to use these photos.
 - This is for private family memory use.
 - I understand the result is AI-generated.
 
-后端记录：
+Backend records:
 
-- 同意文本版本
-- 用户 ID
-- 项目 ID
-- 时间
-- IP
-- 设备信息
+- Consent text version.
+- User ID.
+- Project ID.
+- Timestamp.
+- IP address when available.
+- Device information when available.
 
-#### 预览页
+#### Preview
 
-- 展示 2-4 张低清水印预览
-- 用户可选择一个版本付费解锁
-- 未付费用户不能访问高清图
+- Show 2-4 low-resolution watermarked previews.
+- User selects one version for unlock.
+- Unpaid users cannot access HD files.
 
-#### 下载页
+#### Download
 
-- 展示高清照片
-- 展示 MP4 视频生成状态
-- 支持保存到本地
-- 支持系统分享
-- 明确显示 AI-generated memorial image/video
+- Show final HD photo.
+- Show album/video generation status if purchased.
+- Support saving to local device.
+- Support system share.
+- Show AI-generated labeling in a clear but not intrusive way.
 
 ---
 
-## 5. API 设计
+## 6. API Design
 
-### 认证
+All app APIs should be exposed under the `/api` prefix.
 
-```http
-POST /auth/google
-```
-
-用途：
-
-- 接收 Android Google 登录 token
-- 后端验证 token
-- 创建或查找用户
-- 返回 App session
-
-### 创建项目
+### Authentication
 
 ```http
-POST /projects
+POST /api/auth/google
 ```
 
-请求内容：
+Purpose:
+
+- Receive Android Google sign-in token.
+- Verify token.
+- Create or find user.
+- Return app session.
+
+### List Projects
+
+```http
+GET /api/projects?year=2026&month=5&activityType=TRAVEL_MEMORY&personType=FAMILY_MEMBER
+```
+
+Purpose:
+
+- List the signed-in user's projects.
+- Support optional filters by year, month, activity type, and person type.
+- Return projects sorted by newest first.
+
+### Create Project
+
+```http
+POST /api/projects
+```
+
+Request:
 
 ```json
 {
-  "title": "For Mom",
-  "style": "NATURAL_FAMILY",
-  "locale": "en-US"
+  "title": "Family Trip Memory",
+  "style": "TRAVEL_MEMORY",
+  "locale": "en-US",
+  "eventDate": "2026-05-01",
+  "activityType": "TRAVEL",
+  "personTypes": ["FAMILY_MEMBER"]
 }
 ```
 
-### 获取上传 URL
+Response:
+
+- Project object with generated ID and initial status.
+
+### Upload Photos
 
 ```http
-POST /uploads/sign
+POST /api/projects/{projectId}/upload
 ```
 
-用途：
+Request:
 
-- 为用户选择的照片生成短期上传 URL
-- 避免客户端直连存储主密钥
+```json
+{
+  "type": "base",
+  "fileName": "family-trip.jpg",
+  "mimeType": "image/jpeg",
+  "sizeBytes": 2450000
+}
+```
 
-### 创建预览任务
+Supported upload types:
+
+- `base`: event/base photo.
+- `person`: person reference photo.
+
+Legacy compatibility:
+
+- Old `living` upload type maps to new `base`.
+- Old `deceased` upload type maps to new `person`.
+
+### Create Preview Job
 
 ```http
-POST /projects/{projectId}/preview
+POST /api/projects/{projectId}/preview
 ```
 
-用途：
+Purpose:
 
-- 创建低清水印预览生成任务
-- 后端调用 `gpt-image-2`
-- 输出 2-4 张预览图
+- Create low-resolution watermarked preview generation job.
+- Use project photos, selected style, activity type, and person types.
+- Output 2-4 preview images.
 
-### 查询项目状态
+### Get Project
 
 ```http
-GET /projects/{projectId}
+GET /api/projects/{projectId}
 ```
 
-返回：
+Returns:
 
-- 项目信息
-- 上传资产
-- 预览资产
-- 订单状态
-- 高清资产
-- 视频资产
-- 生成任务状态
+- Project metadata.
+- Uploaded assets.
+- Preview assets.
+- Order status.
+- Final HD assets.
+- Album/video assets.
+- Generation job status.
 
-### 校验 Google Play 订单
+### Check Project Status
 
 ```http
-POST /billing/google/verify
+GET /api/projects/{projectId}/status
 ```
 
-请求内容：
+Purpose:
+
+- Poll project generation state.
+- Return preview/final job progress and asset readiness.
+
+### Verify Google Play Purchase
+
+```http
+POST /api/billing/google/verify
+```
+
+Request:
 
 ```json
 {
@@ -272,535 +395,586 @@ POST /billing/google/verify
 }
 ```
 
-用途：
+Purpose:
 
-- 后端向 Google Play Developer API 校验 purchase token
-- 校验成功后绑定项目权益
-- 返回 entitlement 状态
+- Verify purchase token with Google Play Developer API.
+- Bind entitlement to the project.
+- Return entitlement state.
 
-### 生成高清结果
-
-```http
-POST /projects/{projectId}/finalize
-```
-
-用途：
-
-- 仅付费用户可调用
-- 生成高清照片
-- 如用户购买视频套餐，则生成 MP4 微动视频
-
-### 删除项目
+### Generate Final Result
 
 ```http
-DELETE /projects/{projectId}
+POST /api/projects/{projectId}/finalize
 ```
 
-用途：
+Purpose:
 
-- 删除项目记录
-- 删除原图
-- 删除预览图
-- 删除高清图
-- 删除视频文件
+- Paid users only.
+- Generate HD photo.
+- Generate album/video package if the purchased entitlement includes it.
 
-### 用户反馈/举报
+### Albums
 
 ```http
-POST /reports
+POST /api/albums
+GET /api/albums
+GET /api/albums/{albumId}
+POST /api/albums/{albumId}/render
+GET /api/albums/{albumId}/status
+DELETE /api/albums/{albumId}
 ```
 
-用途：
+Purpose:
 
-- 满足 Google Play 对 AI 生成内容反馈/举报机制的要求
-- 允许用户报告不适、冒犯、错误或滥用内容
+- Create a memory album from selected project IDs or the current filtered set.
+- Render PDF album and optional page-turn MP4.
+- Track render status.
+- Delete album and unlink related projects.
+
+### Delete Project
+
+```http
+DELETE /api/projects/{projectId}
+```
+
+Purpose:
+
+- Delete project record.
+- Delete original uploads.
+- Delete preview images.
+- Delete final images.
+- Delete video and album references where applicable.
+
+### Feedback / Report
+
+```http
+POST /api/reports
+```
+
+Purpose:
+
+- Allow users to report inappropriate, incorrect, unauthorized, or abusive content.
+- Support Google Play requirements for AI-generated content feedback/reporting.
 
 ---
 
-## 6. 数据库设计
+## 7. Data Model
 
 ### users
 
-存储用户基础信息。
+Stores basic user information.
 
-字段建议：
+Suggested fields:
 
-- id
-- google_user_id
-- email
-- display_name
-- country
-- created_at
-- last_login_at
+- `id`.
+- `google_user_id`.
+- `email`.
+- `display_name`.
+- `country`.
+- `created_at`.
+- `last_login_at`.
 
 ### projects
 
-存储家庭纪念项目。
+Stores family memory projects.
 
-字段建议：
+Suggested fields:
 
-- id
-- user_id
-- title
-- style
-- status
-- locale
-- retention_until
-- created_at
-- updated_at
+- `id`.
+- `user_id`.
+- `title`.
+- `style`.
+- `status`.
+- `locale`.
+- `event_date`.
+- `activity_type`.
+- `person_types`.
+- `detected_tags`.
+- `album_id`.
+- `retention_until`.
+- `created_at`.
+- `updated_at`.
 
-项目状态：
+Project statuses:
 
-- draft
-- uploaded
-- preview_queued
-- preview_generating
-- preview_ready
-- payment_pending
-- paid
-- final_generating
-- final_ready
-- failed
-- deleted
+- `draft`.
+- `uploaded`.
+- `preview_queued`.
+- `preview_generating`.
+- `preview_ready`.
+- `payment_pending`.
+- `paid`.
+- `final_generating`.
+- `final_ready`.
+- `failed`.
+- `deleted`.
 
 ### assets
 
-存储上传图、预览图、高清图、视频等资产。
+Stores uploaded photos, preview images, final images, videos, and album outputs.
 
-字段建议：
+Suggested fields:
 
-- id
-- project_id
-- user_id
-- type
-- storage_path
-- width
-- height
-- mime_type
-- size_bytes
-- is_paid_asset
-- created_at
+- `id`.
+- `project_id`.
+- `user_id`.
+- `type`.
+- `storage_path`.
+- `width`.
+- `height`.
+- `mime_type`.
+- `size_bytes`.
+- `is_paid_asset`.
+- `created_at`.
 
-资产类型：
+Asset types:
 
-- base_reference（现场底图，旧字段 deceased_reference 兼容）
-- person_reference（要补入的人物参考照片，旧字段 living_reference 兼容）
-- preview_image
-- final_image
-- final_video
-- watermark_preview
+- `base_reference`: event/base photo.
+- `person_reference`: person reference photo.
+- `preview_image`.
+- `final_image`.
+- `final_video`.
+- `album_pdf`.
+- `album_video`.
+- `watermark_preview`.
+
+Legacy field compatibility:
+
+- Old database field `living_photo_key` is semantically the new base photo.
+- Old database field `deceased_photo_key` is semantically the new person reference photo.
+- New UI and API copy should not expose old names.
+
+### albums
+
+Stores generated memory albums.
+
+Suggested fields:
+
+- `id`.
+- `user_id`.
+- `title`.
+- `project_ids`.
+- `status`.
+- `pdf_key`.
+- `mp4_key`.
+- `created_at`.
+- `updated_at`.
+
+Album statuses:
+
+- `draft`.
+- `render_queued`.
+- `rendering`.
+- `ready`.
+- `failed`.
+- `deleted`.
 
 ### generation_jobs
 
-记录生成任务。
+Tracks generation tasks.
 
-字段建议：
+Suggested fields:
 
-- id
-- project_id
-- job_type
-- model
-- prompt
-- status
-- error_message
-- retry_count
-- estimated_cost
-- started_at
-- finished_at
+- `id`.
+- `project_id`.
+- `job_type`.
+- `model`.
+- `prompt`.
+- `status`.
+- `error_message`.
+- `retry_count`.
+- `estimated_cost`.
+- `started_at`.
+- `finished_at`.
 
-任务类型：
+Job types:
 
-- preview_image
-- final_image
-- final_video
+- `preview_image`.
+- `final_image`.
+- `album_pdf`.
+- `album_video`.
 
 ### orders
 
-记录 Google Play 订单。
+Stores Google Play purchase records.
 
-字段建议：
+Suggested fields:
 
-- id
-- user_id
-- project_id
-- product_id
-- purchase_token_hash
-- google_order_id
-- status
-- entitlement
-- purchased_at
-- verified_at
+- `id`.
+- `user_id`.
+- `project_id`.
+- `product_id`.
+- `purchase_token_hash`.
+- `google_order_id`.
+- `status`.
+- `entitlement`.
+- `purchased_at`.
+- `verified_at`.
 
-订单状态：
+Order statuses:
 
-- pending
-- verified
-- acknowledged
-- refunded
-- revoked
-- failed
+- `pending`.
+- `verified`.
+- `acknowledged`.
+- `refunded`.
+- `revoked`.
+- `failed`.
 
 ### consent_records
 
-记录授权声明。
+Stores accepted consent.
 
-字段建议：
+Suggested fields:
 
-- id
-- user_id
-- project_id
-- consent_version
-- consent_text
-- ip_address
-- device_info
-- accepted_at
+- `id`.
+- `user_id`.
+- `project_id`.
+- `consent_version`.
+- `consent_text`.
+- `ip_address`.
+- `device_info`.
+- `accepted_at`.
 
 ### reports
 
-记录用户反馈或举报。
+Stores user feedback and reports.
 
-字段建议：
+Suggested fields:
 
-- id
-- user_id
-- project_id
-- reason
-- message
-- status
-- created_at
-- resolved_at
-
----
-
-## 7. 图片生成方案
-
-### 模型
-
-使用 OpenAI `gpt-image-2`。
-
-用途：
-
-- 根据用户上传照片生成自然合照
-- 根据用户选择的场景和风格调整画面
-- 输出预览图和高清图
-
-### 预览生成
-
-目标：
-
-- 低成本
-- 快速反馈
-- 防止用户截图绕过付费
-
-策略：
-
-- 生成 2-4 张低清版本
-- 添加明显水印
-- 降低分辨率
-- 不开放原图下载
-
-### 高清生成
-
-目标：
-
-- 付费后提供高质量结果
-- 尽可能稳定保留人物身份特征
-
-策略：
-
-- 使用更高质量设置
-- 输出高分辨率图片
-- 小水印或元数据标注 AI-generated
-- 保留用户可下载资产
-
-### Prompt 方向
-
-Prompt 应强调：
-
-- private family memory photo, natural group photo composition
-- natural family portrait
-- respectful, warm, realistic
-- preserve facial identity from references
-- avoid uncanny expressions
-- do not create text artifacts
-- do not imply the photo is historical evidence
+- `id`.
+- `user_id`.
+- `project_id`.
+- `reason`.
+- `message`.
+- `status`.
+- `created_at`.
+- `resolved_at`.
 
 ---
 
-## 8. 视频动效方案
+## 8. Image Generation Strategy
 
-### 推荐方案
+### Model and Provider
 
-使用服务端 Remotion + FFmpeg。
+Image generation should run only on the backend. The backend can use an image-generation provider abstraction so the concrete provider can be changed by configuration.
 
-Android App 不在本地生成最终视频，只负责：
+Primary use:
 
-- 展示生成状态
-- 播放视频
-- 下载视频
-- 分享视频
+- Generate natural family group-photo completions from uploaded references.
+- Match the user's selected activity and style.
+- Preserve identity cues from references as much as the provider allows.
+- Output preview and HD variants.
 
-### 为什么不放在 Android 端生成
+### Preview Generation
 
-- 设备性能差异大
-- 耗电和发热不可控
-- App 退出或后台时容易失败
-- 生成失败难以恢复
-- 后期 iOS 无法复用
-- 不利于统一水印和质量控制
+Goals:
 
-### 为什么不用 AI 视频模型做第一版
+- Low cost.
+- Fast feedback.
+- Prevent bypassing payment by screenshotting full-quality assets.
 
-- 成本更高
-- 速度更慢
-- 身份漂移风险更高
-- 审核和伦理风险更高
-- 容易变成人物动作复现或 deepfake
+Strategy:
 
-第一版视频应保持在家庭纪念相册式动效，不做人物复活。
+- Generate 2-4 low-resolution preview versions.
+- Add visible watermark.
+- Reduce resolution.
+- Do not expose original final assets before purchase.
 
-### 视频规格
+### HD Generation
 
-建议默认：
+Goals:
 
-- 格式：MP4
-- 编码：H.264
-- 分辨率：1080x1920 竖版
-- 可选：1920x1080 横版
-- 帧率：30fps
-- 时长：6 秒
-- 音频：默认无音频，后续可加授权音乐
+- Provide high-quality paid result.
+- Keep identity and composition stable.
+- Clearly label output as AI-generated.
 
-### 动效内容
+Strategy:
 
-第一版模板：
+- Use higher-quality settings where available.
+- Output high-resolution image.
+- Add small AI-generated marker or metadata where appropriate.
+- Preserve paid asset download access according to retention policy.
 
-- 淡入
-- 缓慢镜头推进
-- 轻微左右平移
-- 柔和光影扫过
-- 轻微胶片颗粒
-- 轻微边缘虚化
-- 结尾淡出
-- 角落标注 AI-generated family memory video
+### Prompt Direction
 
-### 生成流程
+Prompts should emphasize:
 
-```text
-final_image.png
-  -> Remotion composition
-  -> camera animation / overlay / watermark
-  -> FFmpeg render
-  -> final_video.mp4
-  -> upload to storage
-  -> app receives downloadable URL
-```
-
-### 后续增强
-
-V1.5 可以增加：
-
-- 人物/背景分割
-- 2.5D parallax
-- 背景轻微反向移动
-- 前景人物轻微景深变化
-
-但这不是 MVP 必需功能。
+- Private family memory photo.
+- Natural group photo composition.
+- Warm and realistic family-album style.
+- Preserve facial identity from references.
+- Avoid uncanny expressions.
+- Avoid text artifacts.
+- Do not imply that the output is documentary evidence.
+- Respect the selected activity type and person type.
 
 ---
 
-## 9. Google Play Billing 设计
+## 9. Album and Video Strategy
 
-### 推荐商品
+### Recommended Approach
+
+Use server-side rendering for album and video output. Android should not render final PDF/MP4 packages locally.
+
+Android app responsibilities:
+
+- Show render status.
+- Preview generated output when available.
+- Download PDF/MP4.
+- Share output through the system share sheet.
+
+Backend responsibilities:
+
+- Collect selected project outputs.
+- Render PDF album layout.
+- Render optional page-turn MP4.
+- Upload generated assets to storage.
+- Return signed download URLs.
+
+### Why Not Generate Album/Video Locally On Android
+
+- Device performance varies widely.
+- Battery and heat are hard to control.
+- App backgrounding can interrupt rendering.
+- Failures are harder to retry.
+- iOS cannot reuse Android-local rendering logic.
+- Backend rendering provides consistent watermarking and quality.
+
+### First Album Format
+
+Suggested PDF:
+
+- Cover page.
+- Project title and date.
+- Photo pages grouped by month or activity.
+- AI-generated disclosure.
+
+Suggested MP4:
+
+- H.264 MP4.
+- 1080x1920 vertical by default.
+- Optional 1920x1080 landscape.
+- 30 fps.
+- 8-12 seconds for MVP.
+- No audio by default.
+- Page-turn or gentle camera animation.
+
+### Future Enhancements
+
+V1.5 can add:
+
+- Better layout templates.
+- Auto-generated captions.
+- 2.5D parallax from still images.
+- Region-aware album themes.
+- AI-assisted tag suggestions.
+
+These are not required for the MVP.
+
+---
+
+## 10. Google Play Billing Design
+
+### Suggested Products
 
 #### family_memory_hd_unlock
 
-解锁一个项目的高清照片。
+Unlocks HD photo for one project.
 
-建议价格：
+Suggested price:
 
-- USD 9.99
+- USD 9.99.
 
 #### family_memory_album_bundle
 
-解锁一个项目的高清照片 + 微动视频 + PDF 纪念册。
+Unlocks HD photo plus PDF album and optional page-turn MP4 for one project or album package.
 
-建议价格：
+Suggested price:
 
-- USD 14.99
+- USD 14.99.
 
-实际价格应在 Play Console 中按地区本地化。
+Actual prices should be localized in Play Console.
 
-### 购买流程
+### Purchase Flow
 
-1. 用户选择预览图。
-2. App 调起 Google Play Billing。
-3. 用户完成购买。
-4. App 将 purchase token 发给后端。
-5. 后端调用 Google Play Developer API 校验。
-6. 校验成功后，后端创建 entitlement。
-7. App acknowledge purchase。
-8. 后端启动高清图和视频生成任务。
-9. App 轮询项目状态直到结果完成。
+1. User selects a preview or album package.
+2. App starts Google Play Billing.
+3. User completes purchase.
+4. App sends purchase token to backend.
+5. Backend verifies purchase token with Google Play Developer API.
+6. Backend creates entitlement.
+7. App acknowledges purchase.
+8. Backend starts final generation or album render job.
+9. App polls project or album status until output is ready.
 
-### 注意事项
+### Billing Notes
 
-- App 内数字内容应使用 Google Play Billing。
-- 不在 App 内引导用户跳转 Stripe 或网页付款。
-- 后端必须校验 purchase token，不能只相信客户端。
-- 订单处理必须幂等，避免重复发放或重复扣减额度。
-
----
-
-## 10. 合规与信任边界
-
-### 最低规则
-
-第一版采用轻量规则：
-
-- 用户声明拥有照片使用权
-- 用户确认仅作私人家庭纪念
-- 用户理解结果为 AI 生成
-- 输出标注 AI-generated
-- 提供项目删除入口
-- 提供反馈/举报入口
-
-### 内容边界
-
-禁止或限制：
-
-- 名人/公众人物生成
-- 冒充真实历史照片
-- 色情或成人内容
-- 仇恨、骚扰、欺骗性内容
-- 未经同意的现实人物冒充
-- 儿童目标市场
-- 不做公开广场
-
-### 数据保留
-
-建议默认：
-
-- 原始上传图保留 30 天
-- 生成结果保留 30 天
-- 付费资产可在项目历史中保留更久，但用户可删除
-- 用户删除项目后，数据库和存储资产均删除
+- In-app digital content should use Google Play Billing.
+- Do not direct users to Stripe or external payment pages inside the app.
+- Backend must verify purchase tokens.
+- Order handling must be idempotent.
+- Refunded or revoked entitlements must be handled.
 
 ---
 
-## 11. 测试计划
+## 11. Compliance and Trust Boundaries
 
-### Android 测试
+### Minimum Rules
 
-- Google 登录成功/失败
-- session 过期后重新登录
-- Photo Picker 上传 JPG/PNG/WebP
-- 拒绝损坏图片、过小图片、超大图片
-- 弱网下上传失败重试
-- App 进入后台后恢复项目状态
-- 生成任务轮询
-- 下载图片和视频
-- 系统分享
-- 删除项目
+The first version uses lightweight but explicit rules:
 
-### 支付测试
+- User declares they have rights to use uploaded photos.
+- User confirms private family memory use.
+- User understands output is AI-generated.
+- Output is labeled AI-generated.
+- Project deletion is available.
+- Feedback/reporting is available.
 
-- Google Play Billing 测试商品购买
-- 购买取消
-- 购买失败
-- 重复 purchase token
-- webhook/校验重复回调
-- 退款后权限撤销
-- 未付费用户不能访问高清资产
+### Content Boundaries
 
-### 后端测试
+Prohibited or restricted:
 
-- 上传签名 URL 过期
-- 用户不能访问他人项目
-- 生成任务失败重试
-- 幂等订单校验
-- 删除项目后资产不可访问
-- 存储 URL 过期
+- Celebrity or public-figure generation.
+- Impersonation of real historical documentation.
+- Adult or sexual content.
+- Hate, harassment, or deceptive content.
+- Unauthorized use of real people.
+- Child-targeted market positioning.
+- Public gallery or public discovery feed.
 
-### 视频测试
+### Data Retention
 
-- 竖版视频正确输出
-- 横版视频正确输出
-- MP4 可在 Android 播放
-- 水印位置不遮挡人物脸部
-- 视频时长稳定
-- 弱网下下载可重试
+Suggested defaults:
 
-### 审核测试
-
-- App 内无外部支付引导
-- 所有 AI 结果有标识
-- 有隐私政策入口
-- 有数据删除入口
-- 有举报/反馈入口
-- Play Console 提供测试账号和测试购买说明
+- Original uploads retained for 30 days.
+- Generated results retained for 30 days.
+- Paid assets may remain accessible through project history while retained.
+- Users can delete projects.
+- Deleting a project should delete related database records and stored assets where applicable.
 
 ---
 
-## 12. 开发里程碑
+## 12. Test Plan
 
-### Milestone 1：产品骨架
+### Android Tests
 
-- Android 原生项目初始化
-- Google 登录
-- 项目创建
-- Photo Picker 上传
-- 后端项目和资产表
+- Google Sign-In success and failure.
+- Session expiry and refresh behavior.
+- Photo Picker with JPG, PNG, and WebP.
+- Reject corrupt, too-small, or too-large images.
+- Create project with event date, activity type, and person types.
+- Filter project list by year/month, activity type, and person type.
+- Upload event/base photo and person reference photo.
+- Weak network upload retry.
+- App background/resume during generation polling.
+- Download HD image and album/video output.
+- System share.
+- Delete project.
 
-### Milestone 2：预览生成
+### Backend Tests
 
-- 上传照片到云存储
-- 后端调用 `gpt-image-2`
-- 生成低清水印预览
-- App 展示预览图
+- Signed upload URL expiry.
+- User cannot access another user's project.
+- `POST /api/projects` persists organization metadata.
+- `GET /api/projects` filters by year/month, activity type, and person type.
+- Legacy upload mapping:
+  - `deceased` maps to `person`.
+  - `living` maps to `base`.
+- Generation job failure retry.
+- Idempotent purchase verification.
+- Project deletion removes or invalidates assets.
+- Album deletion clears related project `albumId`.
 
-### Milestone 3：内购解锁
+### Billing Tests
 
-- Google Play Billing 集成
-- 后端校验 purchase token
-- entitlement 发放
-- 付费后生成高清图
+- Google Play test product purchase.
+- Purchase cancellation.
+- Purchase failure.
+- Duplicate purchase token.
+- Verification retry.
+- Refund entitlement revocation.
+- Unpaid user cannot access HD assets.
 
-### Milestone 4：视频动效
+### Album Tests
 
-- Remotion 模板
-- FFmpeg 渲染服务
-- 生成 MP4
-- App 播放和下载
+- Create album from selected projects.
+- Create album from current filters.
+- Render PDF album.
+- Render MP4 page-turn video.
+- Poll album status.
+- Delete album and confirm projects are unlinked.
 
-### Milestone 5：合规与上线准备
+### Review / Store Tests
 
-- 隐私政策
-- 数据删除
-- 举报反馈
-- Play Console 配置
-- 测试账号
-- 内测发布
-
-### Milestone 5.5：高级纪念册（Album）
-
-- 多项目相册汇总
-- PDF 纪念册排版导出
-- 翻页 MP4 视频生成
-- 按年月/活动类型/人物筛选
-- 纪念册购买包 family_memory_album_bundle
+- No external payment guidance inside app.
+- AI-generated outputs are labeled.
+- Privacy policy entry exists.
+- Data deletion entry exists.
+- Feedback/reporting entry exists.
+- Play Console test account and test purchase notes are prepared.
 
 ---
 
-## 13. 关键决策总结
+## 13. Development Milestones
 
-- 第一版做 Android App，不做 Web-first。
-- 开发技术选原生 Kotlin，不选 React Native/Flutter。
-- 后端必须存在，不能让客户端直连 OpenAI API。
-- 图片生成用 `gpt-image-2`。
-- 视频动效用 Remotion + FFmpeg 服务端生成。
-- 支付用 Google Play Billing，不在 App 内使用 Stripe。
-- 免费预览采用低清水印图。
-- 付费解锁高清照片和 MP4 视频。
-- 产品定位为私密家庭纪念，不做人物复活、说话、聊天或完整 deepfake 视频。
+### Milestone 1: Product Skeleton
 
+- Android native project setup.
+- Google Sign-In.
+- Project creation.
+- Organization metadata: event date, activity type, person type.
+- Photo Picker upload.
+- Backend project and asset tables.
+
+### Milestone 2: Project Management and Filters
+
+- Home project list.
+- Year/month filter.
+- Activity type filter.
+- Person type filter.
+- Project detail page.
+- Manual metadata editing where needed.
+
+### Milestone 3: Preview Generation
+
+- Upload photos to cloud storage.
+- Backend image-generation provider integration.
+- Low-resolution watermarked previews.
+- App preview selection.
+
+### Milestone 4: In-App Purchase Unlock
+
+- Google Play Billing integration.
+- Backend purchase-token verification.
+- Entitlement creation.
+- Paid HD image generation.
+
+### Milestone 5: Albums
+
+- Create album from selected projects or filters.
+- Render PDF album.
+- Render optional MP4 page-turn video.
+- Download and share album outputs.
+
+### Milestone 6: Compliance and Launch Prep
+
+- Privacy policy.
+- Data deletion.
+- Feedback/reporting.
+- AI-generated disclosure.
+- Play Console configuration.
+- Internal testing release.
+
+---
+
+## 14. Key Decisions
+
+- Build Android first, not web first.
+- Use native Kotlin, not React Native or Flutter, for the MVP.
+- Backend is required; the Android app must not call image-generation APIs directly.
+- Use an image-generation provider abstraction on the backend.
+- Use server-side rendering for PDF albums and MP4 outputs.
+- Use Google Play Billing for in-app digital purchases.
+- Free previews are low-resolution and watermarked.
+- Paid products unlock HD photos and optional album/video packages.
+- Product positioning is private family memory completion, with practical organization by time, activity, and person type.
