@@ -16,9 +16,9 @@ import java.io.FileOutputStream
 
 class ProjectRepository {
 
-    suspend fun getProjects(): Result<List<ProjectDto>> = withContext(Dispatchers.IO) {
+    suspend fun getProjects(year: Int? = null, month: Int? = null, activityType: String? = null, personType: String? = null): Result<List<ProjectDto>> = withContext(Dispatchers.IO) {
         try {
-            val response = RetrofitClient.apiService.getProjects()
+            val response = RetrofitClient.apiService.getProjects(year, month, activityType, personType)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body?.success == true) {
@@ -52,10 +52,10 @@ class ProjectRepository {
         }
     }
 
-    suspend fun createProject(title: String, style: PhotoStyle): Result<ProjectDto> = withContext(Dispatchers.IO) {
+    suspend fun createProject(title: String, style: PhotoStyle, eventDate: String? = null, activityType: String? = null, personTypes: List<String>? = null): Result<ProjectDto> = withContext(Dispatchers.IO) {
         try {
             val response = RetrofitClient.apiService.createProject(
-                CreateProjectRequest(title, style.name)
+                CreateProjectRequest(title, style.name, eventDate, activityType, personTypes)
             )
             if (response.isSuccessful) {
                 val body = response.body()

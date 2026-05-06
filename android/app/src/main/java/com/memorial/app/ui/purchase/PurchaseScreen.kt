@@ -42,7 +42,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryGreen
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -117,7 +117,7 @@ fun PurchaseScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "选择套餐",
+                    text = "Select Package",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -131,7 +131,7 @@ fun PurchaseScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -140,7 +140,7 @@ fun PurchaseScreen(
             }
 
             Text(
-                text = "选择适合您的家庭合照套餐",
+                text = "Choose the right family photo package for you",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -160,7 +160,7 @@ fun PurchaseScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "您已拥有此项目的所有可用套餐",
+                        text = "You already own all available packages for this project",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             color = TextSecondary
                         )
@@ -168,9 +168,9 @@ fun PurchaseScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = onBack,
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
-                        Text("返回项目")
+                        Text("Back to Project")
                     }
                 }
             } else {
@@ -187,7 +187,7 @@ fun PurchaseScreen(
                 if (isPurchasing) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = PrimaryPurple
+                        color = PrimaryGreen
                     )
                 } else {
                     Button(
@@ -198,12 +198,12 @@ fun PurchaseScreen(
                         shape = RoundedCornerShape(14.dp),
                         enabled = selectedProduct != null,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryPurple,
+                            containerColor = PrimaryGreen,
                             disabledContainerColor = DividerLight
                         )
                     ) {
                         Text(
-                            "购买",
+                            "Purchase",
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -223,7 +223,7 @@ private fun PurchaseOptionCard(
     selected: Boolean,
     onSelect: () -> Unit
 ) {
-    val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else Color.White
+    val bgColor = if (selected) PrimaryGreen.copy(alpha = 0.08f) else Color.White
 
     Box(
         modifier = Modifier
@@ -242,7 +242,7 @@ private fun PurchaseOptionCard(
                     text = option.title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = if (selected) PrimaryPurple else TextPrimary
+                        color = if (selected) PrimaryGreen else TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -256,7 +256,7 @@ private fun PurchaseOptionCard(
                 Text(
                     text = option.price,
                     style = MaterialTheme.typography.titleLarge.copy(
-                        color = PrimaryPurple,
+                        color = PrimaryGreen,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -267,7 +267,7 @@ private fun PurchaseOptionCard(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(PrimaryPurple),
+                        .background(PrimaryGreen),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

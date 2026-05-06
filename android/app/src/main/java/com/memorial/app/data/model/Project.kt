@@ -12,7 +12,14 @@ data class Project(
     val candidateUrls: List<String>? = null,
     val regenerationCount: Int = 0,
     val regenerationLimit: Int = 0,
-    val purchasedProductId: String? = null
+    val purchasedProductId: String? = null,
+    val eventDate: String? = null,
+    val activityType: String? = null,
+    val personTypes: List<String>? = null,
+    val detectedTags: List<String>? = null,
+    val albumId: String? = null,
+    val basePhotoUrl: String? = null,
+    val personPhotoUrl: String? = null
 )
 
 enum class PhotoStyle {
@@ -59,4 +66,28 @@ enum class AssetType {
     FINAL_IMAGE,
     FINAL_VIDEO,
     WATERMARK_PREVIEW
+}
+
+enum class ActivityType(val label: String) {
+    TRAVEL("Travel"),
+    PARTY("Party"),
+    HOLIDAY("Holiday"),
+    BIRTHDAY("Birthday"),
+    WEDDING("Wedding"),
+    GRADUATION("Graduation"),
+    REUNION("Reunion"),
+    DAILY("Daily"),
+    OTHER("Other")
+}
+
+enum class PersonType(val label: String) {
+    PARENT("Parent"),
+    GRANDPARENT("Grandparent"),
+    CHILD("Child"),
+    SIBLING("Sibling"),
+    PARTNER("Partner"),
+    FRIEND("Friend"),
+    RELATIVE("Relative"),
+    PET("Pet"),
+    OTHER("Other")
 }

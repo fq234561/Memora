@@ -27,8 +27,8 @@ data class ProjectDto(
     @SerializedName("userId") val userId: String,
     @SerializedName("title") val title: String,
     @SerializedName("style") val style: String,
-    @SerializedName("deceasedPhotoUrl") val deceasedPhotoUrl: String? = null,
-    @SerializedName("livingPhotoUrl") val livingPhotoUrl: String? = null,
+    @SerializedName("basePhotoUrl") val basePhotoUrl: String? = null,
+    @SerializedName("personPhotoUrl") val personPhotoUrl: String? = null,
     @SerializedName("generatedPhotoUrl") val generatedPhotoUrl: String? = null,
     @SerializedName("hdPhotoUrl") val hdPhotoUrl: String? = null,
     @SerializedName("status") val status: String,
@@ -39,12 +39,20 @@ data class ProjectDto(
     @SerializedName("selectedCandidateIndex") val selectedCandidateIndex: Int? = null,
     @SerializedName("purchasedProductId") val purchasedProductId: String? = null,
     @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("updatedAt") val updatedAt: String
+    @SerializedName("updatedAt") val updatedAt: String,
+    @SerializedName("eventDate") val eventDate: String? = null,
+    @SerializedName("activityType") val activityType: String? = null,
+    @SerializedName("personTypes") val personTypes: List<String>? = null,
+    @SerializedName("detectedTags") val detectedTags: List<String>? = null,
+    @SerializedName("albumId") val albumId: String? = null
 )
 
 data class CreateProjectRequest(
     @SerializedName("title") val title: String,
-    @SerializedName("style") val style: String
+    @SerializedName("style") val style: String,
+    @SerializedName("eventDate") val eventDate: String? = null,
+    @SerializedName("activityType") val activityType: String? = null,
+    @SerializedName("personTypes") val personTypes: List<String>? = null
 )
 
 data class StatusResponse(
@@ -104,4 +112,21 @@ data class ContactRequest(
     @SerializedName("email") val email: String,
     @SerializedName("message") val message: String,
     @SerializedName("projectId") val projectId: String? = null
+)
+
+data class AlbumDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("userId") val userId: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("projectIds") val projectIds: List<String>,
+    @SerializedName("status") val status: String,
+    @SerializedName("pdfUrl") val pdfUrl: String? = null,
+    @SerializedName("mp4Url") val mp4Url: String? = null,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("updatedAt") val updatedAt: String
+)
+
+data class CreateAlbumRequest(
+    @SerializedName("title") val title: String,
+    @SerializedName("projectIds") val projectIds: List<String>
 )

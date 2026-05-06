@@ -104,11 +104,49 @@ class PostgresStore {
     return this.rowToProject(row);
   }
 
-  async getProjectsByUser(userId: string): Promise<Project[]> {
+  async getProjectsByUser(
+    userId: string,
+    filters?: {
+      year?: number;
+      month?: number;
+      activityType?: string;
+      personType?: string;
+    }
+  ): Promise<Project[]> {
     const db = getPool();
+    const conditions: string[] = ['user_id = $1'];
+    const values: any[] = [userId];
+    let paramIndex = 2;
+
+    if (filters) {
+      if (filters.year !== undefined) {
+        if (filters.month !== undefined) {
+          const monthStr = String(filters.month).padStart(2, '0');
+          conditions.push(`event_date IS NOT NULL AND event_date LIKE $${paramIndex++}`);
+          values.push(`${filters.year}-${monthStr}%`);
+        } else {
+          conditions.push(`event_date IS NOT NULL AND event_date LIKE $${paramIndex++}`);
+          values.push(`${filters.year}%`);
+        }
+      } else if (filters.month !== undefined) {
+        const monthStr = String(filters.month).padStart(2, '0');
+        conditions.push(`event_date IS NOT NULL AND event_date LIKE '_%-${monthStr}%'`);
+      }
+
+      if (filters.activityType !== undefined) {
+        conditions.push(`activity_type = $${paramIndex++}`);
+        values.push(filters.activityType);
+      }
+
+      if (filters.personType !== undefined) {
+        conditions.push(`person_types::jsonb @> $${paramIndex++}::jsonb`);
+        values.push(JSON.stringify([filters.personType]));
+      }
+    }
+
     const result = await db.query(
-      'SELECT * FROM projects WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
+      `SELECT * FROM projects WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
+      values
     );
     return Promise.all(result.rows.map((r) => this.rowToProject(r)));
   }

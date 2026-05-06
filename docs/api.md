@@ -57,7 +57,17 @@ All project endpoints require authentication.
 
 ### GET /api/projects
 
-List all projects for the authenticated user.
+Retrieve the user's project list with optional classification filtering.
+
+Query Parameters (optional):
+- `year`: number - Filter by event year (e.g., 2026)
+- `month`: number - Filter by event month (1-12)
+- `activityType`: string - Filter by activity type (TRAVEL, PARTY, HOLIDAY, etc.)
+- `personType`: string - Filter by person type in the personTypes array
+
+Note: year/month filtering is based on the `eventDate` field. Projects without an `eventDate` are excluded from year/month filtering.
+
+Filter logic: When multiple parameters are provided, they are combined with AND logic.
 
 **Response:**
 ```json
@@ -69,8 +79,8 @@ List all projects for the authenticated user.
       "userId": "user_123",
       "title": "For Mom",
       "style": "NATURAL_FAMILY",
-      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field,兼容)
-      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field,兼容)
+      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field, compatibility)
+      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field, compatibility)
       "generatedPhotoUrl": null,
       "hdPhotoUrl": null,
       "status": "DRAFT",
@@ -95,14 +105,28 @@ Create a new memory project.
 **Request:**
 ```json
 {
-  "title": "For Mom",
-  "style": "NATURAL_FAMILY"
+  "title": "Family Trip",
+  "style": "NATURAL_FAMILY",
+  "eventDate": "2026-05-15",
+  "activityType": "TRAVEL",
+  "personTypes": ["PARENT", "SIBLING"]
 }
 ```
 
 **`style` enum:** `NATURAL_FAMILY`, `TRAVEL_MEMORY`, `PARTY_GATHERING`, `HOLIDAY_CELEBRATION`, `MILESTONE_EVENT`
 
-**Response:** `201 Created` — same shape as a single project object in `GET /api/projects`.
+**`activityType` enum (ActivityType):** `TRAVEL`, `PARTY`, `HOLIDAY`, `BIRTHDAY`, `WEDDING`, `GRADUATION`, `REUNION`, `DAILY`, `OTHER`
+
+**`personTypes` array items (PersonType):** `PARENT`, `SIBLING`, `CHILD`, `PARTNER`, `GRANDPARENT`, `FRIEND`, `PET`, `OTHER`
+
+Optional classification fields:
+- `eventDate`: Activity date in "YYYY-MM-DD" format
+- `activityType`: Activity type enum (single value)
+- `personTypes`: Array of person type enums (multiple values allowed)
+
+> **Note:** `detectedTags` is a reserved field for future AI auto-classification and is not user-editable.
+
+**Response:** `201 Created` - same shape as a single project object in `GET /api/projects`.
 
 ### GET /api/projects/:id
 
@@ -115,8 +139,8 @@ Get project details. Photo URLs are signed URLs (15-minute TTL) when stored in R
 Upload a photo file directly via multipart/form-data to R2 storage.
 
 **Request:** `multipart/form-data`
-- `photo` — image file (JPG, PNG, or WebP, max 20MB)
-- `type` — `"base"` or `"person"` (legacy values `"deceased"` and `"living"` are accepted for backward compatibility)
+- `photo` - image file (JPG, PNG, or WebP, max 20MB)
+- `type` - `"base"` or `"person"` (legacy values `"deceased"` and `"living"` are accepted for backward compatibility)
 
 **Response:**
 ```json
@@ -128,8 +152,8 @@ Upload a photo file directly via multipart/form-data to R2 storage.
       "userId": "user_123",
       "title": "For Mom",
       "style": "NATURAL_FAMILY",
-      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field,兼容)
-      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field,兼容)
+      "deceasedPhotoUrl": "https://...",  // semantic: personPhotoUrl (legacy field, compatibility)
+      "livingPhotoUrl": "https://...",    // semantic: basePhotoUrl (legacy field, compatibility)
       "generatedPhotoUrl": null,
       "hdPhotoUrl": null,
       "status": "UPLOADED",
@@ -173,7 +197,7 @@ Request AI generation (mock candidates via `picsum.photos` in current implementa
 }
 ```
 
-**Response:** `202 Accepted` — project object with `status: GENERATING`.
+**Response:** `202 Accepted` - project object with `status: GENERATING`.
 
 **Rules:**
 - Requires a verified purchase (`preview_pack` or `full_pack`).
@@ -247,11 +271,11 @@ Create a purchase record (status `PENDING`, no entitlements granted yet).
 
 **`productId` values:** `preview_pack`, `hd_unlock`, `full_pack`
 
-- `preview_pack` — 低清水印预览生成
-- `hd_unlock` — 高清合照解锁
-- `full_pack` — 高清合照 + PDF 纪念册 + 翻页视频包
+- `preview_pack` - low-resolution watermarked preview generation
+- `hd_unlock` - HD family photo unlock
+- `full_pack` - HD family photo + PDF album + page-turn video bundle
 
-**Response:** `201 Created` — Purchase object.
+**Response:** `201 Created` - Purchase object.
 
 ### POST /api/purchases/verify
 
@@ -283,7 +307,7 @@ Build a GPT Image 2 prompt from user inputs.
 ```json
 {
   "activityType": "family gathering",
-  "personTypes": ["absent loved one", "family member"],
+  "personTypes": ["family member"],
   "style": "NATURAL_FAMILY",
   "eventContext": "optional context",
   "mood": "warm",
@@ -328,7 +352,7 @@ Create a new memory album.
 }
 ```
 
-**Response:** `201 Created` — Album object.
+**Response:** `201 Created` - Album object.
 
 ### POST /api/albums/:id/render
 
@@ -342,7 +366,7 @@ Create a PDF + MP4 generation task for the album.
 }
 ```
 
-**Response:** `202 Accepted` — Album object with `status: RENDERING`.
+**Response:** `202 Accepted` - Album object with `status: RENDERING`.
 
 ### GET /api/albums/:id/status
 

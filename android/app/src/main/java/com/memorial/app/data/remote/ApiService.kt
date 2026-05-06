@@ -14,7 +14,7 @@ interface ApiService {
 
     // Projects
     @GET("api/projects")
-    suspend fun getProjects(): Response<ApiResponse<List<ProjectDto>>>
+    suspend fun getProjects(@Query("year") year: Int? = null, @Query("month") month: Int? = null, @Query("activityType") activityType: String? = null, @Query("personType") personType: String? = null): Response<ApiResponse<List<ProjectDto>>>
 
     @POST("api/projects")
     suspend fun createProject(@Body request: CreateProjectRequest): Response<ApiResponse<ProjectDto>>
@@ -61,6 +61,22 @@ interface ApiService {
     // Prompts
     @POST("api/prompts/optimize")
     suspend fun optimizePrompt(@Body request: PromptOptimizeRequest): Response<ApiResponse<OptimizedPromptResult>>
+
+    // Albums
+    @GET("api/albums")
+    suspend fun getAlbums(): Response<ApiResponse<List<AlbumDto>>>
+
+    @POST("api/albums")
+    suspend fun createAlbum(@Body request: CreateAlbumRequest): Response<ApiResponse<AlbumDto>>
+
+    @GET("api/albums/{id}")
+    suspend fun getAlbum(@Path("id") id: String): Response<ApiResponse<AlbumDto>>
+
+    @POST("api/albums/{id}/render")
+    suspend fun renderAlbum(@Path("id") id: String): Response<ApiResponse<AlbumDto>>
+
+    @DELETE("api/albums/{id}")
+    suspend fun deleteAlbum(@Path("id") id: String): Response<ApiResponse<Unit>>
 
     // Contact
     @POST("api/contact")

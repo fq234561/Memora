@@ -8,14 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.memorial.app.data.remote.RetrofitClient
-import com.memorial.app.ui.theme.MemorialAppTheme
+import com.memorial.app.ui.theme.MemoraAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         RetrofitClient.initialize(this)
         setContent {
-            MemorialAppTheme {
+            MemoraAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

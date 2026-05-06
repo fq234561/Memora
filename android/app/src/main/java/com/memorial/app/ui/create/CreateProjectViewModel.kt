@@ -18,6 +18,15 @@ class CreateProjectViewModel : ViewModel() {
     private val _selectedStyle = MutableStateFlow(PhotoStyle.NATURAL_FAMILY)
     val selectedStyle: StateFlow<PhotoStyle> = _selectedStyle
 
+    private val _eventDate = MutableStateFlow("")
+    val eventDate: StateFlow<String> = _eventDate
+
+    private val _selectedActivityType = MutableStateFlow<com.memorial.app.data.model.ActivityType?>(null)
+    val selectedActivityType: StateFlow<com.memorial.app.data.model.ActivityType?> = _selectedActivityType
+
+    private val _selectedPersonTypes = MutableStateFlow<List<com.memorial.app.data.model.PersonType>>(emptyList())
+    val selectedPersonTypes: StateFlow<List<com.memorial.app.data.model.PersonType>> = _selectedPersonTypes
+
     private val _isCreating = MutableStateFlow(false)
     val isCreating: StateFlow<Boolean> = _isCreating
 
@@ -32,6 +41,16 @@ class CreateProjectViewModel : ViewModel() {
         _selectedStyle.value = style
     }
 
+    fun onEventDateChange(date: String) { _eventDate.value = date }
+    fun onActivitySelected(type: com.memorial.app.data.model.ActivityType?) { _selectedActivityType.value = type }
+    fun togglePersonType(type: com.memorial.app.data.model.PersonType) {
+        _selectedPersonTypes.value = if (type in _selectedPersonTypes.value) {
+            _selectedPersonTypes.value - type
+        } else {
+            _selectedPersonTypes.value + type
+        }
+    }
+
     fun createProject(onProjectCreated: (String) -> Unit) {
         android.util.Log.d("CreateProject", "createProject called, title='${_title.value}'")
         if (_title.value.isBlank()) {
@@ -44,7 +63,13 @@ class CreateProjectViewModel : ViewModel() {
             _error.value = null
             try {
                 android.util.Log.d("CreateProject", "calling repository.createProject")
-                val result = repository.createProject(_title.value, _selectedStyle.value)
+                val result = repository.createProject(
+                    title = _title.value,
+                    style = _selectedStyle.value,
+                    eventDate = _eventDate.value.ifBlank { null },
+                    activityType = _selectedActivityType.value?.name,
+                    personTypes = _selectedPersonTypes.value.map { it.name }.ifEmpty { null }
+                )
                 android.util.Log.d("CreateProject", "result: isSuccess=${result.isSuccess}")
                 if (result.isSuccess) {
                     onProjectCreated(result.getOrNull()?.id ?: "")
@@ -52,15 +77,10 @@ class CreateProjectViewModel : ViewModel() {
                     _error.value = result.exceptionOrNull()?.message ?: "Failed to create project"
                 }
             } catch (e: Exception) {
-                android.util.Log.e("CreateProject", "Exception: ${e.message}", e)
-                _error.value = e.message ?: "Network error"
+                _error.value = e.message ?: "Failed to create project"
             } finally {
                 _isCreating.value = false
             }
         }
-    }
-
-    fun clearError() {
-        _error.value = null
     }
 }

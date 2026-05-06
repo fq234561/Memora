@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryGreen
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -81,7 +81,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "设置",
+                    text = "Settings",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -95,7 +95,7 @@ fun SettingsScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -104,12 +104,12 @@ fun SettingsScreen(
             }
 
             // Account section
-            SectionTitle("账户")
+            SectionTitle("Account")
 
             SettingItemCard(
                 icon = Icons.Default.Email,
-                iconTint = PrimaryPurple,
-                title = "已登录账户",
+                iconTint = PrimaryGreen,
+                title = "Logged-in Account",
                 subtitle = userEmail,
                 onClick = { }
             )
@@ -117,26 +117,26 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             // Privacy section
-            SectionTitle("数据与隐私")
+            SectionTitle("Data & Privacy")
 
             SettingItemCard(
                 icon = Icons.Default.Lock,
-                iconTint = PrimaryPurple,
-                title = "删除所有数据",
-                subtitle = "永久删除所有项目、照片和生成结果",
+                iconTint = PrimaryGreen,
+                title = "Delete All Data",
+                subtitle = "Permanently delete all projects, photos and generated results",
                 onClick = { showDeleteDialog = true }
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             // Feedback section
-            SectionTitle("反馈")
+            SectionTitle("Feedback")
 
             SettingItemCard(
                 icon = Icons.Default.Create,
-                iconTint = PrimaryPurple,
-                title = "报告问题",
-                subtitle = "遇到 bug 或有建议？告诉我们",
+                iconTint = PrimaryGreen,
+                title = "Report an Issue",
+                subtitle = "Found a bug or have a suggestion? Let us know",
                 onClick = { /* Navigate to feedback */ }
             )
 
@@ -155,7 +155,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text("退出登录")
+                Text("Sign Out")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -165,8 +165,8 @@ fun SettingsScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("删除所有数据？") },
-            text = { Text("此操作无法撤销。您的所有项目和生成的照片将被永久删除。") },
+            title = { Text("Delete All Data?") },
+            text = { Text("This action cannot be undone. All your projects and generated photos will be permanently deleted.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -174,12 +174,12 @@ fun SettingsScreen(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )

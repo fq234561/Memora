@@ -39,7 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.memorial.app.data.repository.ProjectRepository
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryGreen
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -76,7 +76,7 @@ fun ConsentScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "确认授权",
+                    text = "Confirm Authorization",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -90,7 +90,7 @@ fun ConsentScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -99,7 +99,7 @@ fun ConsentScreen(
             }
 
             Text(
-                text = "在生成家庭合照之前，请确认以下事项",
+                text = "Before generating a family memory photo, please confirm the following",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -110,22 +110,22 @@ fun ConsentScreen(
             ConsentItemCard(
                 checked = hasRight,
                 onCheckedChange = { viewModel.toggleHasRightToPhotos() },
-                title = "我有权使用这些照片",
-                description = "我确认拥有这些照片的合法使用权"
+                title = "I have the right to use all uploaded photos",
+                description = "I confirm the uploaded photos are taken by me or legally authorized for use."
             )
 
             ConsentItemCard(
                 checked = privateUse,
                 onCheckedChange = { viewModel.togglePrivateUseOnly() },
-                title = "仅用于私人家庭纪念",
-                description = "这张照片仅用于个人/家庭纪念用途，不用于商业目的，也不冒充真实历史照片"
+                title = "For Private Family Memory Only",
+                description = "This photo is for personal/family memory use only, not for commercial purposes, and will not be presented as authentic historical photos."
             )
 
             ConsentItemCard(
                 checked = understandAi,
                 onCheckedChange = { viewModel.toggleUnderstandAiGenerated() },
-                title = "我理解这是 AI 生成的图像",
-                description = "我知道最终结果是 AI 技术生成的，不是真实拍摄的照片"
+                title = "I understand this is an AI-generated image",
+                description = "I understand the final image is AI-generated and may not be fully realistic. I will use it in a respectful and appropriate manner."
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -144,12 +144,12 @@ fun ConsentScreen(
                 shape = RoundedCornerShape(14.dp),
                 enabled = hasRight && privateUse && understandAi,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryPurple,
+                    containerColor = PrimaryGreen,
                     disabledContainerColor = DividerLight
                 )
             ) {
                 Text(
-                    "我同意并继续",
+                    "Confirm & Continue",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.SemiBold
                     )
@@ -168,7 +168,7 @@ private fun ConsentItemCard(
     title: String,
     description: String
 ) {
-    val bgColor = if (checked) PrimaryPurple.copy(alpha = 0.08f) else Color.White
+    val bgColor = if (checked) PrimaryGreen.copy(alpha = 0.08f) else Color.White
 
     Box(
         modifier = Modifier
@@ -187,7 +187,7 @@ private fun ConsentItemCard(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(if (checked) PrimaryPurple else DividerLight),
+                    .background(if (checked) PrimaryGreen else DividerLight),
                 contentAlignment = Alignment.Center
             ) {
                 if (checked) {
@@ -207,7 +207,7 @@ private fun ConsentItemCard(
                     text = title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = if (checked) PrimaryPurple else TextPrimary
+                        color = if (checked) PrimaryGreen else TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(4.dp))

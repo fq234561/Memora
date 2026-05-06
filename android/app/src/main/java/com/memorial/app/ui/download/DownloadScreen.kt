@@ -12,23 +12,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,15 +42,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.memorial.app.ui.theme.BackgroundWarm
+import com.memorial.app.ui.theme.CardSurface
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.PrimaryGreen
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -81,215 +75,158 @@ fun DownloadScreen(
     val saveState by viewModel.saveState.collectAsState()
     val regenerationRemaining by viewModel.regenerationRemaining.collectAsState()
     val navigateToPreview by viewModel.navigateToPreview.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
     var showRegenerateDialog by remember { mutableStateOf(false) }
-    var adjustmentText by remember { mutableStateOf("") }
     var useAdjustment by remember { mutableStateOf(false) }
+    var adjustmentText by remember { mutableStateOf("") }
 
     LaunchedEffect(saveState) {
-        when (saveState) {
+        when (val state = saveState) {
             is DownloadViewModel.SaveState.Success -> {
-                Toast.makeText(context, "照片已保存到相册", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Saved to gallery", Toast.LENGTH_SHORT).show()
                 viewModel.clearSaveState()
             }
             is DownloadViewModel.SaveState.Error -> {
-                val msg = (saveState as DownloadViewModel.SaveState.Error).message
-                Toast.makeText(context, "保存失败: $msg", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 viewModel.clearSaveState()
             }
-            else -> {}
-        }
-    }
-
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.retryLoad()
+            else -> Unit
         }
     }
 
     LaunchedEffect(navigateToPreview) {
         if (navigateToPreview) {
-            onRegenerate()
             viewModel.onNavigateToPreviewHandled()
+            onRegenerate()
         }
     }
 
-    Scaffold(
-        containerColor = BackgroundWarm,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold(containerColor = BackgroundWarm) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "您的家庭合照",
+                    text = "Your Family Memory Photo",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     ),
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { /* Share */ }) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = "分享",
-                        tint = TextSecondary
-                    )
+                TextButton(onClick = onBackToHome) {
+                    Text("Home", color = TextSecondary)
                 }
             }
-
-            Text(
-                text = "AI 生成的家庭合照",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = TextMuted
-                ),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             when {
                 isLoading -> {
                     Box(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(360.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = PrimaryPurple)
+                        CircularProgressIndicator(color = PrimaryGreen)
                     }
                 }
 
                 errorMessage != null -> {
                     Box(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(CardSurface)
+                            .padding(20.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = errorMessage ?: "加载失败",
+                                text = errorMessage ?: "Unable to load this project",
                                 color = MaterialTheme.colorScheme.error,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = { viewModel.retryLoad() },
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                             ) {
-                                Text("重试")
+                                Text("Retry")
                             }
                         }
                     }
                 }
 
-                else -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                photoUrl != null -> {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "Generated family memory photo",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(CardSurface),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Text(
+                        text = "AI-generated family memory photo",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextMuted)
+                    )
+
+                    Button(
+                        onClick = { viewModel.downloadAndSavePhoto(context, photoUrl!!) },
+                        enabled = saveState !is DownloadViewModel.SaveState.Saving,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                     ) {
-                        // Image card
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color.White)
-                                .padding(12.dp)
-                        ) {
-                            photoUrl?.let { url ->
-                                AsyncImage(
-                                    model = url,
-                                    contentDescription = "高清家庭合照",
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(12.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } ?: run {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("高清家庭合照", textAlign = TextAlign.Center)
-                                }
-                            }
-                        }
+                        Text(
+                            text = if (saveState is DownloadViewModel.SaveState.Saving) "Saving..." else "Save HD Photo",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                    }
 
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        Button(
-                            onClick = {
-                                photoUrl?.let { url ->
-                                    viewModel.downloadAndSavePhoto(context, url)
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            enabled = saveState !is DownloadViewModel.SaveState.Saving && photoUrl != null,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PrimaryPurple,
-                                disabledContainerColor = DividerLight
-                            )
-                        ) {
-                            if (saveState is DownloadViewModel.SaveState.Saving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text("保存中...")
-                            } else {
-                                Text(
-                                    "下载高清照片",
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-                            }
-                        }
-
-                        if (regenerationRemaining > 0) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = { showRegenerateDialog = true },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Text("重新生成 (剩余 $regenerationRemaining 次)")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
+                    if (regenerationRemaining > 0) {
                         OutlinedButton(
-                            onClick = onBackToHome,
+                            onClick = { showRegenerateDialog = true },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Text("返回首页")
+                            Text("Regenerate ($regenerationRemaining left)")
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+
+                else -> {
+                    Text(
+                        text = "No generated photo is ready yet.",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
+                    )
+                }
+            }
+
+            OutlinedButton(
+                onClick = onBackToHome,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Back to Home")
             }
         }
     }
@@ -297,31 +234,31 @@ fun DownloadScreen(
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("重新生成候选") },
+            title = { Text("Regenerate Options") },
             text = {
                 Column {
-                    Text("您还有 $regenerationRemaining 次重新生成机会。")
+                    Text("You have $regenerationRemaining regeneration opportunities left.")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.RadioButton(
+                        RadioButton(
                             selected = !useAdjustment,
                             onClick = { useAdjustment = false }
                         )
-                        Text("使用相同设置")
+                        Text("Use the same settings")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.RadioButton(
+                        RadioButton(
                             selected = useAdjustment,
                             onClick = { useAdjustment = true }
                         )
-                        Text("添加调整说明")
+                        Text("Add adjustment notes")
                     }
                     if (useAdjustment) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = adjustmentText,
                             onValueChange = { adjustmentText = it },
-                            label = { Text("描述您想要的调整") },
+                            label = { Text("Describe the adjustment you want") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2
                         )
@@ -332,20 +269,20 @@ fun DownloadScreen(
                 Button(
                     onClick = {
                         showRegenerateDialog = false
-                        val adj = if (useAdjustment && adjustmentText.isNotBlank()) adjustmentText else null
-                        viewModel.regenerate(adj)
+                        val adjustment = if (useAdjustment && adjustmentText.isNotBlank()) adjustmentText else null
+                        viewModel.regenerate(adjustment)
                         adjustmentText = ""
                         useAdjustment = false
                     },
                     enabled = regenerationRemaining > 0,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                 ) {
-                    Text("重新生成")
+                    Text("Regenerate")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )

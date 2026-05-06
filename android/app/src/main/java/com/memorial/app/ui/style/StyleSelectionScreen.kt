@@ -38,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.memorial.app.data.model.PhotoStyle
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
+import com.memorial.app.ui.theme.PrimaryGreen
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -71,7 +71,7 @@ fun StyleSelectionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "选择风格",
+                    text = "Select Style",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -85,7 +85,7 @@ fun StyleSelectionScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -94,7 +94,7 @@ fun StyleSelectionScreen(
             }
 
             Text(
-                text = "选择一种最适合您家庭合照的风格",
+                text = "Choose the best style for your family photo",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -119,11 +119,11 @@ fun StyleSelectionScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryPurple
+                    containerColor = PrimaryGreen
                 )
             ) {
                 Text(
-                    "继续",
+                    "Continue",
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.SemiBold
                     )
@@ -142,14 +142,14 @@ private fun StyleCard(
     onSelect: () -> Unit
 ) {
     val (title, description) = when (style) {
-        PhotoStyle.NATURAL_FAMILY -> "自然家庭照" to "温暖、自然的家庭风格合影"
-        PhotoStyle.TRAVEL_MEMORY -> "旅行回忆" to "把亲友自然融入旅途风景"
-        PhotoStyle.PARTY_GATHERING -> "派对聚会" to "生日、聚会等轻松欢乐场景"
-        PhotoStyle.HOLIDAY_CELEBRATION -> "节日庆典" to "节日团圆、温馨庆祝氛围"
-        PhotoStyle.MILESTONE_EVENT -> "重要时刻" to "婚礼、毕业、升学等人生里程碑"
+        PhotoStyle.NATURAL_FAMILY -> "Natural Family" to "Warm, natural family group photo"
+        PhotoStyle.TRAVEL_MEMORY -> "Travel Memory" to "Naturally blend loved ones into travel scenery"
+        PhotoStyle.PARTY_GATHERING -> "Party Gathering" to "Birthday, party and fun celebration"
+        PhotoStyle.HOLIDAY_CELEBRATION -> "Holiday Celebration" to "Festive reunion and warm holiday vibe"
+        PhotoStyle.MILESTONE_EVENT -> "Milestone Event" to "Wedding, graduation and life milestones"
     }
 
-    val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else Color.White
+    val bgColor = if (selected) PrimaryGreen.copy(alpha = 0.08f) else Color.White
 
     Box(
         modifier = Modifier
@@ -168,7 +168,7 @@ private fun StyleCard(
                     text = title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = if (selected) PrimaryPurple else TextPrimary
+                        color = if (selected) PrimaryGreen else TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -185,7 +185,7 @@ private fun StyleCard(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(PrimaryPurple),
+                        .background(PrimaryGreen),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(

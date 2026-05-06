@@ -58,9 +58,10 @@ import com.memorial.app.data.model.Project
 import com.memorial.app.data.model.ProjectStatus
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.CardSurface
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleDark
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.DividerLight
+import com.memorial.app.ui.theme.PrimaryGreen
+import com.memorial.app.ui.theme.PrimaryGreenDark
+import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.StatusCompleted
 import com.memorial.app.ui.theme.StatusCompletedBg
 import com.memorial.app.ui.theme.StatusDraft
@@ -90,6 +91,11 @@ fun HomeScreen(
     val projects by viewModel.projects.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val selectedYear by viewModel.selectedYear.collectAsState()
+    val selectedMonth by viewModel.selectedMonth.collectAsState()
+    val selectedActivityFilter by viewModel.selectedActivityType.collectAsState()
+    val selectedPersonFilter by viewModel.selectedPersonType.collectAsState()
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
@@ -114,6 +120,23 @@ fun HomeScreen(
                     BrandHeader(onOpenSettings = onOpenSettings)
                 }
 
+                // Filter Bar
+                item {
+                    FilterBar(
+                        selectedFilter = selectedFilter,
+                        onFilterSelected = viewModel::onFilterSelected,
+                        selectedYear = selectedYear,
+                        selectedMonth = selectedMonth,
+                        selectedActivityType = selectedActivityFilter,
+                        selectedPersonType = selectedPersonFilter,
+                        onYearSelected = viewModel::onYearSelected,
+                        onMonthSelected = viewModel::onMonthSelected,
+                        onActivityTypeSelected = viewModel::onActivityTypeFilter,
+                        onPersonTypeSelected = viewModel::onPersonTypeFilter,
+                        onApplyFilter = { viewModel.loadProjects() }
+                    )
+                }
+
                 // Main CTA Card
                 item {
                     CreateProjectCard(onClick = onCreateProject)
@@ -130,14 +153,14 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "我的项目",
+                            text = "My Projects",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                         )
                         Text(
-                            text = "${projects.size} 个",
+                            text = "${projects.size}",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = TextMuted
                             )
@@ -146,9 +169,10 @@ fun HomeScreen(
                 }
 
                 // Content
+                val filterActive = selectedFilter != HomeViewModel.FilterType.ALL
                 if (projects.isEmpty() && !isLoading) {
                     item {
-                        EmptyState(onCreateProject = onCreateProject)
+                        EmptyState(onCreateProject = onCreateProject, filterActive = filterActive)
                     }
                 } else {
                     items(projects, key = { it.id }) { project ->
@@ -169,7 +193,7 @@ fun HomeScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                color = PrimaryPurple,
+                                color = PrimaryGreen,
                                 strokeWidth = 3.dp
                             )
                         }
@@ -182,7 +206,7 @@ fun HomeScreen(
                 state = pullRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter),
                 backgroundColor = CardSurface,
-                contentColor = PrimaryPurple
+                contentColor = PrimaryGreen
             )
 
             // Floating Action Button (bottom right)
@@ -198,7 +222,7 @@ fun HomeScreen(
                         .clip(CircleShape)
                         .background(
                             brush = Brush.linearGradient(
-                                colors = listOf(PrimaryPurple, PrimaryPurpleDark),
+                                colors = listOf(PrimaryGreen, PrimaryGreenDark),
                                 start = Offset(0f, 0f),
                                 end = Offset(56f, 56f)
                             )
@@ -235,12 +259,12 @@ private fun BrandHeader(
                 text = "Memora",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryPurple,
+                    color = PrimaryGreen,
                     letterSpacing = (-0.5).sp
                 )
             )
             Text(
-                text = "把缺席的亲友，带回珍贵瞬间",
+                text = "Complete meaningful family photos from precious moments",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = TextMuted,
                     fontSize = 12.sp
@@ -285,7 +309,7 @@ private fun CreateProjectCard(
                 .fillMaxSize()
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(PrimaryPurple, PrimaryPurpleDark),
+                        colors = listOf(PrimaryGreen, PrimaryGreenDark),
                         start = Offset(0f, 0f),
                         end = Offset(300f, 100f)
                     )
@@ -302,14 +326,14 @@ private fun CreateProjectCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "创建新的家庭合照",
+                        text = "Create a Family Memory Photo",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     )
                     Text(
-                        text = "上传活动照片与亲友参考图，AI 帮你自然补全",
+                        text = "Upload event photos and person references, AI helps you complete naturally",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -425,32 +449,69 @@ private fun ProjectCard(
                     StatusChip(label = statusStyle.label, color = statusStyle.color, bgColor = statusStyle.bgColor)
                 }
 
-                // Date
-                Text(
-                    text = "创建于 ${project.createdAt.take(10).replace("-", ".")}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextMuted,
-                        fontSize = 11.sp
+                // Date + Tags row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Created ${project.createdAt.take(10).replace("-", ".")}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
                     )
-                )
+                    if (project.eventDate != null) {
+                        Text(
+                            text = "|",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = DividerLight,
+                                fontSize = 11.sp
+                            )
+                        )
+                        Text(
+                            text = project.eventDate,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = PrimaryGreen,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
+
+                // Tags chips
+                if (project.activityType != null || !project.personTypes.isNullOrEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        project.activityType?.let {
+                            TagChip(label = formatTagLabel(it))
+                        }
+                        project.personTypes?.forEach { personType ->
+                            TagChip(label = formatTagLabel(personType))
+                        }
+                    }
+                }
 
                 // Action hint
                 val actionText = when (project.status) {
-                    ProjectStatus.DRAFT -> "继续上传照片"
+                    ProjectStatus.DRAFT -> "Continue Uploading Photos"
                     ProjectStatus.UPLOADED ->
-                        if (project.purchasedProductId != null) "生成 AI 合照预览" else "购买预览套餐"
-                    ProjectStatus.GENERATING -> "正在生成中..."
-                    ProjectStatus.PREVIEW_READY -> "选择最喜欢的版本"
-                    ProjectStatus.PURCHASED -> "解锁高清合照"
-                    ProjectStatus.COMPLETED -> "下载高清合照"
-                    ProjectStatus.FAILED -> "重新生成"
-                    else -> "查看详情"
+                        if (project.purchasedProductId != null) "Generate AI Photo Preview" else "Buy Preview Pack"
+                    ProjectStatus.GENERATING -> "Generating..."
+                    ProjectStatus.PREVIEW_READY -> "Choose Your Favorite Version"
+                    ProjectStatus.PURCHASED -> "Unlock HD Photo"
+                    ProjectStatus.COMPLETED -> "Download HD Photo"
+                    ProjectStatus.FAILED -> "Regenerate"
+                    else -> "View Details"
                 }
 
                 Text(
                     text = actionText,
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = if (isClickable) PrimaryPurple else TextMuted,
+                        color = if (isClickable) PrimaryGreen else TextMuted,
                         fontWeight = FontWeight.Medium,
                         fontSize = 12.sp
                     )
@@ -502,14 +563,14 @@ private fun PlaceholderImage() {
                 val px = centerX + kotlin.math.cos(angle) * size.width * 0.22f
                 val py = centerY + kotlin.math.sin(angle) * size.height * 0.22f
                 drawCircle(
-                    color = PrimaryPurpleLight.copy(alpha = 0.3f),
+                    color = PrimaryGreenLight.copy(alpha = 0.3f),
                     radius = petalRadius,
                     center = Offset(px, py)
                 )
             }
             // Center
             drawCircle(
-                color = PrimaryPurple.copy(alpha = 0.5f),
+                color = PrimaryGreen.copy(alpha = 0.5f),
                 radius = centerRadius,
                 center = Offset(centerX, centerY)
             )
@@ -519,7 +580,8 @@ private fun PlaceholderImage() {
 
 @Composable
 private fun EmptyState(
-    onCreateProject: () -> Unit
+    onCreateProject: () -> Unit,
+    filterActive: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -545,7 +607,7 @@ private fun EmptyState(
 
                 // Soft frame
                 drawRoundRect(
-                    color = PrimaryPurpleLight.copy(alpha = 0.2f),
+                    color = PrimaryGreenLight.copy(alpha = 0.2f),
                     size = androidx.compose.ui.geometry.Size(w * 0.6f, h * 0.55f),
                     topLeft = Offset(centerX - w * 0.3f, centerY - h * 0.25f),
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(12f, 12f)
@@ -561,18 +623,18 @@ private fun EmptyState(
 
                 // Two person silhouettes
                 drawCircle(
-                    color = PrimaryPurple.copy(alpha = 0.15f),
+                    color = PrimaryGreen.copy(alpha = 0.15f),
                     radius = w * 0.1f,
                     center = Offset(centerX - w * 0.08f, centerY - h * 0.02f)
                 )
                 drawCircle(
-                    color = PrimaryPurpleDark.copy(alpha = 0.15f),
+                    color = PrimaryGreenDark.copy(alpha = 0.15f),
                     radius = w * 0.08f,
                     center = Offset(centerX + w * 0.08f, centerY + h * 0.02f)
                 )
 
                 // Hearts / sparkles
-                val sparkleColor = PrimaryPurple.copy(alpha = 0.25f)
+                val sparkleColor = PrimaryGreen.copy(alpha = 0.25f)
                 drawCircle(
                     color = sparkleColor,
                     radius = w * 0.03f,
@@ -587,7 +649,7 @@ private fun EmptyState(
         }
 
         Text(
-            text = "还没有家庭合照",
+            text = if (filterActive) "No family photos match your filters" else "No family photos yet",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = TextPrimary
@@ -595,7 +657,7 @@ private fun EmptyState(
         )
 
         Text(
-            text = "上传活动照片和亲友参考图，让 AI 帮您\n补全一张完整的家庭合照",
+            text = "Upload event photos and person references,\nlet AI complete a family memory photo",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary,
                 lineHeight = 22.sp
@@ -612,14 +674,14 @@ private fun EmptyState(
                 .clip(RoundedCornerShape(14.dp))
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(PrimaryPurple, PrimaryPurpleDark)
+                        colors = listOf(PrimaryGreen, PrimaryGreenDark)
                     )
                 )
                 .clickable { onCreateProject() },
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "开始第一张家庭合照",
+                text = "Create Your First Family Photo",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
@@ -629,21 +691,49 @@ private fun EmptyState(
     }
 }
 
+@Composable
+private fun TagChip(label: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(PrimaryGreen.copy(alpha = 0.10f))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = PrimaryGreen,
+                fontWeight = FontWeight.Medium,
+                fontSize = 9.sp
+            )
+        )
+    }
+}
+
 private data class StatusStyle(
     val label: String,
     val color: Color,
     val bgColor: Color
 )
 
+private fun formatTagLabel(value: String): String {
+    return value
+        .lowercase()
+        .split('_')
+        .joinToString(" ") { segment ->
+            segment.replaceFirstChar { char -> char.uppercaseChar() }
+        }
+}
+
 private fun statusStyleFor(status: ProjectStatus): StatusStyle {
     return when (status) {
-        ProjectStatus.DRAFT -> StatusStyle("草稿", StatusDraft, StatusDraftBg)
-        ProjectStatus.UPLOADED -> StatusStyle("待生成", StatusUpload, StatusUploadBg)
-        ProjectStatus.GENERATING -> StatusStyle("生成中", StatusGenerating, StatusGeneratingBg)
-        ProjectStatus.PREVIEW_READY -> StatusStyle("预览就绪", StatusPreview, StatusPreviewBg)
-        ProjectStatus.PURCHASED -> StatusStyle("待解锁", StatusPurchased, StatusPurchasedBg)
-        ProjectStatus.COMPLETED -> StatusStyle("已完成", StatusCompleted, StatusCompletedBg)
-        ProjectStatus.FAILED -> StatusStyle("失败", StatusFailed, StatusFailedBg)
-        else -> StatusStyle("未知", StatusDraft, StatusDraftBg)
+        ProjectStatus.DRAFT -> StatusStyle("Draft", StatusDraft, StatusDraftBg)
+        ProjectStatus.UPLOADED -> StatusStyle("Pending", StatusUpload, StatusUploadBg)
+        ProjectStatus.GENERATING -> StatusStyle("Generating", StatusGenerating, StatusGeneratingBg)
+        ProjectStatus.PREVIEW_READY -> StatusStyle("Preview Ready", StatusPreview, StatusPreviewBg)
+        ProjectStatus.PURCHASED -> StatusStyle("Unlocked", StatusPurchased, StatusPurchasedBg)
+        ProjectStatus.COMPLETED -> StatusStyle("Completed", StatusCompleted, StatusCompletedBg)
+        ProjectStatus.FAILED -> StatusStyle("Failed", StatusFailed, StatusFailedBg)
+        else -> StatusStyle("Unknown", StatusDraft, StatusDraftBg)
     }
 }

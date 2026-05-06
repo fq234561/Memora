@@ -58,9 +58,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleDark
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.PrimaryGreen
+import com.memorial.app.ui.theme.PrimaryGreenDark
+import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -135,7 +135,7 @@ fun PreviewScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "预览与选择",
+                    text = "Preview & Select",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -149,7 +149,7 @@ fun PreviewScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -165,7 +165,7 @@ fun PreviewScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = PrimaryPurple)
+                        CircularProgressIndicator(color = PrimaryGreen)
                     }
                 }
 
@@ -211,31 +211,31 @@ fun PreviewScreen(
     if (showRegenerateDialog) {
         AlertDialog(
             onDismissRequest = { showRegenerateDialog = false },
-            title = { Text("重新生成候选") },
+            title = { Text("Regenerate Candidates") },
             text = {
                 Column {
-                    Text("您还有 $regenerationRemaining 次重新生成机会。")
+                    Text("You have $regenerationRemaining regeneration(s) remaining.")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = !useAdjustment,
                             onClick = { useAdjustment = false }
                         )
-                        Text("使用相同设置")
+                        Text("Use Same Settings")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.RadioButton(
                             selected = useAdjustment,
                             onClick = { useAdjustment = true }
                         )
-                        Text("添加调整说明")
+                        Text("Add Adjustment Note")
                     }
                     if (useAdjustment) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = adjustmentText,
                             onValueChange = { adjustmentText = it },
-                            label = { Text("描述您想要的调整") },
+                            label = { Text("Describe your desired adjustments") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2
                         )
@@ -252,14 +252,14 @@ fun PreviewScreen(
                         useAdjustment = false
                     },
                     enabled = regenerationRemaining > 0,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
                 ) {
-                    Text("重新生成")
+                    Text("Regenerate")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRegenerateDialog = false }) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
         )
@@ -279,13 +279,13 @@ private fun PurchaseRequiredContent(
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .background(PrimaryPurple.copy(alpha = 0.1f)),
+                .background(PrimaryGreen.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = PrimaryPurple,
+                tint = PrimaryGreen,
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -293,7 +293,7 @@ private fun PurchaseRequiredContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "准备生成家庭合照",
+            text = "Ready to Generate Family Photo",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -301,7 +301,7 @@ private fun PurchaseRequiredContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "购买预览套餐后，AI 将为您生成 4 张候选家庭合照",
+            text = "After purchasing a preview pack, AI will generate 4 candidate family photos",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary
             ),
@@ -314,10 +314,10 @@ private fun PurchaseRequiredContent(
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
         ) {
             Text(
-                "购买预览套餐 ($2.99)",
+                "Buy Preview Pack ($2.99)",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 )
@@ -331,7 +331,7 @@ private fun PurchaseRequiredContent(
                 .height(48.dp),
             shape = RoundedCornerShape(14.dp)
         ) {
-            Text("购买完整套餐 ($12.99)")
+            Text("Buy Full Pack ($12.99)")
         }
     }
 }
@@ -349,16 +349,16 @@ private fun ReadyToGenerateContent(
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .background(PrimaryPurple.copy(alpha = 0.1f)),
+                .background(PrimaryGreen.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = PrimaryPurple, modifier = Modifier.size(40.dp))
+            CircularProgressIndicator(color = PrimaryGreen, modifier = Modifier.size(40.dp))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "准备就绪",
+            text = "Ready",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -366,7 +366,7 @@ private fun ReadyToGenerateContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "照片和风格偏好已准备好。现在生成 4 张 AI 候选家庭合照。",
+            text = "Photos and style preferences are ready. Now generating 4 AI candidate family photos.",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = TextSecondary
             ),
@@ -379,10 +379,10 @@ private fun ReadyToGenerateContent(
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
         ) {
             Text(
-                "生成 4 张候选",
+                "Generate 4 Candidates",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 )
@@ -398,10 +398,10 @@ private fun GeneratingContent(progress: Int?) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(color = PrimaryPurple, modifier = Modifier.size(48.dp))
+            CircularProgressIndicator(color = PrimaryGreen, modifier = Modifier.size(48.dp))
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "正在生成您的家庭合照候选...",
+                "Generating your family memory candidates...",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = TextPrimary,
                     fontWeight = FontWeight.Medium
@@ -412,7 +412,7 @@ private fun GeneratingContent(progress: Int?) {
                 Text(
                     "$it%",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = PrimaryPurple,
+                        color = PrimaryGreen,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -423,7 +423,7 @@ private fun GeneratingContent(progress: Int?) {
                         .fillMaxWidth(0.6f)
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
-                    color = PrimaryPurple,
+                    color = PrimaryGreen,
                     trackColor = DividerLight
                 )
             }
@@ -443,14 +443,14 @@ private fun CandidatesContent(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "选择最接近您想要的那张",
+            text = "Pick the one closest to what you want",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
         )
         Text(
-            text = "点击选择一张候选图像",
+            text = "Tap to select a candidate image",
             style = MaterialTheme.typography.bodySmall.copy(
                 color = TextMuted
             )
@@ -472,14 +472,14 @@ private fun CandidatesContent(
                         .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = if (isSelected) 3.dp else 1.dp,
-                            color = if (isSelected) PrimaryPurple else DividerLight,
+                            color = if (isSelected) PrimaryGreen else DividerLight,
                             shape = RoundedCornerShape(12.dp)
                         )
                         .clickable { onSelect(index) }
                 ) {
                     AsyncImage(
                         model = url,
-                        contentDescription = "候选 ${index + 1}",
+                        contentDescription = "Candidate ${index + 1}",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -490,8 +490,8 @@ private fun CandidatesContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "已选中",
-                                tint = PrimaryPurple,
+                                contentDescription = "Selected",
+                                tint = PrimaryGreen,
                                 modifier = Modifier
                                     .padding(8.dp)
                                     .size(28.dp)
@@ -526,9 +526,9 @@ private fun CandidatesContent(
             ) {
                 Text(
                     if (regenerationRemaining > 0)
-                        "重新生成 (剩余 $regenerationRemaining 次)"
+                        "Regenerate ($regenerationRemaining remaining)"
                     else
-                        "重新生成次数已用完"
+                        "No regenerations left"
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -542,15 +542,15 @@ private fun CandidatesContent(
             shape = RoundedCornerShape(14.dp),
             enabled = selectedIndex != null,
             colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryPurple,
+                containerColor = PrimaryGreen,
                 disabledContainerColor = DividerLight
             )
         ) {
             Text(
                 if (purchasedProductId == "full_pack")
-                    "确认选择并解锁高清"
+                    "Confirm & Unlock HD"
                 else
-                    "确认选择并解锁高清 ($6.99)",
+                    "Confirm & Unlock HD ($6.99)",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.SemiBold
                 )
@@ -571,7 +571,7 @@ private fun ErrorContent(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = errorMessage ?: "生成失败",
+                text = errorMessage ?: "Generation Failed",
                 color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge
@@ -579,9 +579,9 @@ private fun ErrorContent(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text(if (hasPurchase) "重试" else "重试")
+                Text(if (hasPurchase) "Retry" else "Retry")
             }
         }
     }

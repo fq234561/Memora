@@ -36,11 +36,11 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun MemorialAppTheme(
+fun MemoraAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Memorial app uses light theme always for a warm, gentle feel
+    // Memora app uses light theme always for a warm, gentle feel
     val colorScheme = LightColorScheme
 
     MaterialTheme(

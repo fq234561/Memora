@@ -76,7 +76,7 @@ const compositionOverrideMap: Record<string, string> = {
 const familySafetyConstraints = [
   'This is a private family memory image, not a historical photograph.',
   'AI-generated family photo. Natural and respectful tone only.',
-  'Do not depict speech, movement, animation, or resurrection.',
+  'Do not depict speech, movement, animation, or full-body reenactment.',
   'Do not include text artifacts, watermarks, signatures, or commercial branding.',
   'Preserve the facial identity and natural appearance of the subjects from the provided reference photos.',
   'Do not impersonate public figures or create deceptive content.',

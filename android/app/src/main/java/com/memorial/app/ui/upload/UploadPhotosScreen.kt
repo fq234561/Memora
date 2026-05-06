@@ -55,8 +55,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.CardSurface
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.PrimaryGreen
+import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -140,7 +140,7 @@ fun UploadPhotosScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "上传照片",
+                    text = "Upload Photos",
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -154,7 +154,7 @@ fun UploadPhotosScreen(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = "Back",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = TextSecondary
                         )
@@ -163,7 +163,7 @@ fun UploadPhotosScreen(
             }
 
             Text(
-                text = "选择照片，AI 将帮您补全一张完整的家庭合照",
+                text = "Select photos and let AI complete a family memory photo",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -178,11 +178,11 @@ fun UploadPhotosScreen(
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = null,
-                    tint = PrimaryPurpleLight,
+                    tint = PrimaryGreenLight,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "您的照片仅用于生成家庭合照，处理完成后将安全删除",
+                    text = "Your photos are only used to generate family photos and will be securely deleted after processing is complete",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = TextMuted
                     )
@@ -208,7 +208,7 @@ fun UploadPhotosScreen(
                     .padding(vertical = 4.dp)
             ) {
                 Text(
-                    text = "使用测试照片 (Dev)",
+                    text = "Use test photos (Dev)",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = TextMuted
                     )
@@ -217,8 +217,8 @@ fun UploadPhotosScreen(
 
             // Photo slots
             PhotoSlotCard(
-                label = "活动底图",
-                subtitle = "选择活动现场的合照或风景照",
+                label = "Scene Photo",
+                subtitle = "Choose an event photo or scenery shot",
                 photoUri = basePhotoUri,
                 onSelect = {
                     selectingFor = SelectingSlot.BASE
@@ -229,8 +229,8 @@ fun UploadPhotosScreen(
             )
 
             PhotoSlotCard(
-                label = "补入人物",
-                subtitle = "选择要自然合入的亲友参考照片",
+                label = "Person Reference",
+                subtitle = "Choose the reference photo of the person to blend in",
                 photoUri = personPhotoUri,
                 onSelect = {
                     selectingFor = SelectingSlot.PERSON
@@ -245,7 +245,7 @@ fun UploadPhotosScreen(
             if (isUploading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = PrimaryPurple
+                    color = PrimaryGreen
                 )
             } else {
                 Button(
@@ -256,12 +256,12 @@ fun UploadPhotosScreen(
                     shape = RoundedCornerShape(14.dp),
                     enabled = basePhotoUri != null && personPhotoUri != null && !uploadSuccess,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryPurple,
+                        containerColor = PrimaryGreen,
                         disabledContainerColor = DividerLight
                     )
                 ) {
                     Text(
-                        "继续",
+                        "Continue",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -322,7 +322,7 @@ private fun PhotoSlotCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "已选择 - 点击更换",
+                        text = "Selected - Tap to change",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = TextSecondary
                         )
@@ -341,13 +341,13 @@ private fun PhotoSlotCard(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape)
-                        .background(PrimaryPurple.copy(alpha = 0.1f)),
+                        .background(PrimaryGreen.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = PrimaryPurple,
+                        tint = PrimaryGreen,
                         modifier = Modifier.size(28.dp)
                     )
                 }

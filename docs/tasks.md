@@ -96,12 +96,13 @@
 - [ ] Privacy policy draft
 - [ ] Play Console notes
 
-## Phase 10: Album & Advanced Features
-- [ ] Album 数据模型与 API
-- [ ] 按年月/活动类型/人物类型筛选项目
-- [ ] AI 自动识别分类（detectedTags）
-- [ ] PDF 纪念册导出
-- [ ] 翻页 MP4 视频生成
+## Phase 10: Classification, Album & Advanced Features
+- [x] Activity type and person type tagging
+- [x] Project filtering by date/type/person
+- [x] Album API (basic)
+- [ ] AI auto-recognition for detectedTags (FUTURE)
+- [ ] Real PDF/MP4 rendering for albums (FUTURE)
+- [ ] Push notification for album rendering completion (FUTURE)
 
 ## Current Next Priorities
 - [ ] Replace mock image generation with server-side OpenAI image generation

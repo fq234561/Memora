@@ -21,9 +21,9 @@ export interface Project {
   userId: string;
   title: string;
   style: PhotoStyle;
-  /** @deprecated Legacy field name. Semantically now represents the "person" reference photo. Use personPhotoUrl. */
+  /** @deprecated Legacy field name. Semantically now represents the person reference photo. Use personPhotoUrl. */
   deceasedPhotoUrl?: string;
-  /** @deprecated Legacy field name. Semantically now represents the "base" activity/group photo. Use basePhotoUrl. */
+  /** @deprecated Legacy field name. Semantically now represents the event/base reference photo. Use basePhotoUrl. */
   livingPhotoUrl?: string;
   basePhotoUrl?: string;
   personPhotoUrl?: string;

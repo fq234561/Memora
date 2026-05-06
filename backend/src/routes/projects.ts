@@ -44,7 +44,7 @@ async function resolvePhotoUrl(key: string | undefined): Promise<string | undefi
 
 // Helper: add signed URLs to project response
 // Note: DB schema still uses deceased_photo_key / living_photo_key.
-// Semantically these now map to personPhotoUrl (person to include) and basePhotoUrl (activity/group photo).
+// Semantically these now map to basePhotoUrl (event/base photo) and personPhotoUrl (person reference).
 async function resolveProjectUrls(project: Project): Promise<Project> {
   const [basePhotoUrl, personPhotoUrl, generatedPhotoUrl, hdPhotoUrl] = await Promise.all([
     resolvePhotoUrl(project.basePhotoUrl || project.livingPhotoUrl),
@@ -103,10 +103,18 @@ router.post('/', validateBody(['title', 'style']), async (req: Request, res: Res
 });
 
 // GET /api/projects - List user's projects
-// TODO: future support for filtering by year/month/activityType/personType
+// Supports query params: year, month, activityType, personType
 router.get('/', async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const projects = await store.getProjectsByUser(userId);
+  const { year, month, activityType, personType } = req.query;
+
+  const projects = await store.getProjectsByUser(userId, {
+    year: year ? parseInt(year as string) : undefined,
+    month: month ? parseInt(month as string) : undefined,
+    activityType: activityType as string | undefined,
+    personType: personType as string | undefined
+  });
+
   const resolvedProjects = await Promise.all(projects.map((p) => resolveProjectUrls(p)));
 
   const response: ApiResponse<Project[]> = {
@@ -174,8 +182,12 @@ router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Res
 
   if (isBase) {
     updates.basePhotoUrl = key;
+    // DB schema still uses living_photo_key for the base/event photo.
+    (updates as any).livingPhotoUrl = key;
   } else if (isPerson) {
     updates.personPhotoUrl = key;
+    // DB schema still uses deceased_photo_key for the person reference photo.
+    (updates as any).deceasedPhotoUrl = key;
   }
 
   // Auto-update status if both photos uploaded

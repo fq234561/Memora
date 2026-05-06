@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.memorial.app.BuildConfig
 import com.memorial.app.ui.theme.BackgroundWarm
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleDark
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.PrimaryGreen
+import com.memorial.app.ui.theme.PrimaryGreenDark
+import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
@@ -76,7 +76,7 @@ fun LoginScreen(
                     .clip(CircleShape)
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(PrimaryPurple, PrimaryPurpleDark),
+                            colors = listOf(PrimaryGreen, PrimaryGreenDark),
                             start = Offset(0f, 0f),
                             end = Offset(80f, 80f)
                         )
@@ -97,7 +97,7 @@ fun LoginScreen(
                 text = "Memora",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryPurple,
+                    color = PrimaryGreen,
                     letterSpacing = (-0.5).sp
                 ),
                 textAlign = TextAlign.Center
@@ -106,7 +106,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "与思念的人，再合一张照",
+                text = "Reunite in a photo with those you miss",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = TextSecondary
                 ),
@@ -116,7 +116,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "上传照片，由 AI 帮您把缺席的亲友\n自然合入美好回忆",
+                text = "Upload event photos and person references,\nthen let AI complete a family memory photo",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextMuted,
                     lineHeight = 22.sp
@@ -128,7 +128,7 @@ fun LoginScreen(
 
             when (uiState) {
                 is LoginViewModel.LoginUiState.Loading -> {
-                    CircularProgressIndicator(color = PrimaryPurple)
+                    CircularProgressIndicator(color = PrimaryGreen)
                 }
 
                 else -> {
@@ -139,11 +139,11 @@ fun LoginScreen(
                             .height(52.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryPurple
+                            containerColor = PrimaryGreen
                         )
                     ) {
                         Text(
-                            "使用 Google 登录",
+                            "Sign in with Google",
                             style = MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.SemiBold
                             )

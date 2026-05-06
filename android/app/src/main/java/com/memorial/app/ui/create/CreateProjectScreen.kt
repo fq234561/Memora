@@ -3,8 +3,11 @@ package com.memorial.app.ui.create
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +26,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -36,24 +41,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.memorial.app.data.model.ActivityType
+import com.memorial.app.data.model.PersonType
 import com.memorial.app.data.model.PhotoStyle
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.CardSurface
 import com.memorial.app.ui.theme.DividerLight
-import com.memorial.app.ui.theme.PrimaryPurple
-import com.memorial.app.ui.theme.PrimaryPurpleDark
-import com.memorial.app.ui.theme.PrimaryPurpleLight
+import com.memorial.app.ui.theme.PrimaryGreen
+import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreateProjectScreen(
     onProjectCreated: (String) -> Unit,
@@ -62,6 +67,9 @@ fun CreateProjectScreen(
 ) {
     val title by viewModel.title.collectAsState()
     val selectedStyle by viewModel.selectedStyle.collectAsState()
+    val eventDate by viewModel.eventDate.collectAsState()
+    val selectedActivityType by viewModel.selectedActivityType.collectAsState()
+    val selectedPersonTypes by viewModel.selectedPersonTypes.collectAsState()
     val isCreating by viewModel.isCreating.collectAsState()
     val error by viewModel.error.collectAsState()
 
@@ -98,14 +106,14 @@ fun CreateProjectScreen(
 
             // Header
             Text(
-                text = "创建家庭纪念合照",
+                text = "Create Family Memory",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
             )
             Text(
-                text = "把缺席的亲友自然合入美好回忆",
+                text = "Complete family, travel, party, and milestone photos with AI",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextSecondary
                 )
@@ -117,7 +125,7 @@ fun CreateProjectScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "项目名称",
+                    text = "Project Name",
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = TextPrimary
@@ -127,12 +135,12 @@ fun CreateProjectScreen(
                 OutlinedTextField(
                     value = title,
                     onValueChange = viewModel::onTitleChange,
-                    placeholder = { Text("例如：全家旅行纪念、同学聚会补照") },
+                    placeholder = { Text("e.g. Family trip, class reunion") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryPurple,
+                        focusedBorderColor = PrimaryGreen,
                         unfocusedBorderColor = DividerLight
                     )
                 )
@@ -145,9 +153,9 @@ fun CreateProjectScreen(
                         .padding(vertical = 4.dp)
                 ) {
                     Text(
-                        text = "使用测试标题 (Dev)",
+                        text = "Use Test Title (Dev)",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = PrimaryPurple,
+                            color = PrimaryGreen,
                             fontWeight = FontWeight.Medium
                         )
                     )
@@ -156,7 +164,7 @@ fun CreateProjectScreen(
 
             // Style selection
             Text(
-                text = "选择照片风格",
+                text = "Select Photo Style",
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
@@ -171,12 +179,79 @@ fun CreateProjectScreen(
                 )
             }
 
+            // Event Date input
+            Text(
+                text = "Event Date",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            )
+            OutlinedTextField(
+                value = eventDate,
+                onValueChange = viewModel::onEventDateChange,
+                placeholder = { Text("YYYY-MM-DD (optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryGreen,
+                    unfocusedBorderColor = DividerLight
+                )
+            )
+
+            // Activity Type chips
+            Text(
+                text = "Activity Type",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            )
+            FlowRow(horizontalArrangement = spacedBy(8.dp), verticalArrangement = spacedBy(8.dp)) {
+                ActivityType.values().forEach { type ->
+                    val selected = type == selectedActivityType
+                    FilterChip(
+                        selected = selected,
+                        onClick = { viewModel.onActivitySelected(if (selected) null else type) },
+                        label = { Text(type.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = PrimaryGreen.copy(alpha = 0.12f),
+                            selectedLabelColor = PrimaryGreen
+                        )
+                    )
+                }
+            }
+
+            // Person Type chips
+            Text(
+                text = "Person Types",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            )
+            FlowRow(horizontalArrangement = spacedBy(8.dp), verticalArrangement = spacedBy(8.dp)) {
+                PersonType.values().forEach { type ->
+                    val selected = type in selectedPersonTypes
+                    FilterChip(
+                        selected = selected,
+                        onClick = { viewModel.togglePersonType(type) },
+                        label = { Text(type.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = PrimaryGreen.copy(alpha = 0.12f),
+                            selectedLabelColor = PrimaryGreen
+                        )
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isCreating) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    color = PrimaryPurple
+                    color = PrimaryGreen
                 )
             } else {
                 Button(
@@ -187,12 +262,12 @@ fun CreateProjectScreen(
                     shape = RoundedCornerShape(14.dp),
                     enabled = title.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryPurple,
+                        containerColor = PrimaryGreen,
                         disabledContainerColor = DividerLight
                     )
                 ) {
                     Text(
-                        "创建项目",
+                        "Create Project",
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -209,7 +284,7 @@ fun CreateProjectScreen(
                         contentColor = TextSecondary
                     )
                 ) {
-                    Text("取消")
+                    Text("Cancel")
                 }
             }
 
@@ -225,14 +300,14 @@ private fun StyleOptionCard(
     onSelect: () -> Unit
 ) {
     val (title, description) = when (style) {
-        PhotoStyle.NATURAL_FAMILY -> "自然家庭照" to "温暖、自然的家庭风格合影"
-        PhotoStyle.TRAVEL_MEMORY -> "旅行回忆" to "把亲友自然融入旅途风景"
-        PhotoStyle.PARTY_GATHERING -> "派对聚会" to "生日、聚会等轻松欢乐场景"
-        PhotoStyle.HOLIDAY_CELEBRATION -> "节日庆典" to "节日团圆、温馨庆祝氛围"
-        PhotoStyle.MILESTONE_EVENT -> "重要时刻" to "婚礼、毕业、升学等人生里程碑"
+        PhotoStyle.NATURAL_FAMILY -> "Natural Family" to "Warm, natural family portrait style"
+        PhotoStyle.TRAVEL_MEMORY -> "Travel Memory" to "Naturally blend loved ones into travel scenery"
+        PhotoStyle.PARTY_GATHERING -> "Party Gathering" to "Birthday, parties and other relaxed, joyful scenes"
+        PhotoStyle.HOLIDAY_CELEBRATION -> "Holiday Celebration" to "Holiday reunion, warm celebration atmosphere"
+        PhotoStyle.MILESTONE_EVENT -> "Milestone Event" to "Weddings, graduations and other life milestones"
     }
 
-    val bgColor = if (selected) PrimaryPurple.copy(alpha = 0.08f) else CardSurface
+    val bgColor = if (selected) PrimaryGreen.copy(alpha = 0.08f) else CardSurface
 
     Box(
         modifier = Modifier
@@ -251,7 +326,7 @@ private fun StyleOptionCard(
                     text = title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = if (selected) PrimaryPurple else TextPrimary
+                        color = if (selected) PrimaryGreen else TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -268,7 +343,7 @@ private fun StyleOptionCard(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(PrimaryPurple),
+                        .background(PrimaryGreen),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
