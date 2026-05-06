@@ -11,6 +11,7 @@ import {
 } from '../models/types';
 import { store } from '../services/store';
 import { uploadFile, getSignedDownloadUrl } from '../services/storage';
+import { imageGeneration } from '../services/imageGeneration';
 import { AppError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
 import { validateBody } from '../middleware/validator';
@@ -255,39 +256,57 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
   setTimeout(async () => {
     const success = Math.random() > 0.1; // 90% success rate
     if (success) {
-      // Generate 4 candidate images with different seeds
-      const candidateUrls = [
-        `https://picsum.photos/seed/${id}_c1/400/600`,
-        `https://picsum.photos/seed/${id}_c2/400/600`,
-        `https://picsum.photos/seed/${id}_c3/400/600`,
-        `https://picsum.photos/seed/${id}_c4/400/600`,
-      ];
+      try {
+        const result = await imageGeneration.generateCandidates({
+          projectId: id,
+          style: project.style,
+          customPrompt,
+          adjustmentPrompt,
+          deceasedPhotoUrl: project.deceasedPhotoUrl,
+          livingPhotoUrl: project.livingPhotoUrl,
+          isRegeneration,
+        });
 
-      const historyEntry: GenerationHistoryEntry = {
-        id: uuidv4(),
-        type: isRegeneration ? 'regenerate' : 'initial',
-        timestamp: new Date().toISOString(),
-        prompt: customPrompt || 'default_prompt',
-        adjustmentPrompt: adjustmentPrompt || undefined,
-        candidateUrls,
-        status: 'success',
-      };
+        const historyEntry: GenerationHistoryEntry = {
+          id: uuidv4(),
+          type: isRegeneration ? 'regenerate' : 'initial',
+          timestamp: new Date().toISOString(),
+          prompt: result.prompt,
+          adjustmentPrompt: adjustmentPrompt || undefined,
+          candidateUrls: result.candidateUrls,
+          status: 'success',
+        };
 
-      const successUpdates: Partial<Project> = {
-        status: ProjectStatus.PREVIEW_READY,
-        candidateUrls,
-      };
+        const successUpdates: Partial<Project> = {
+          status: ProjectStatus.PREVIEW_READY,
+          candidateUrls: result.candidateUrls,
+        };
 
-      // Increment regeneration count only on successful regeneration
-      if (isRegeneration) {
-        successUpdates.regenerationCount = project.regenerationCount + 1;
+        // Increment regeneration count only on successful regeneration
+        if (isRegeneration) {
+          successUpdates.regenerationCount = project.regenerationCount + 1;
+        }
+
+        // Append to generation history
+        const updatedHistory = [...project.generationHistory, historyEntry];
+        (successUpdates as any).generationHistory = updatedHistory;
+
+        await store.updateProject(id, successUpdates);
+      } catch (err) {
+        console.error('[projects] Image generation provider failed:', err);
+        // Technical failure: rollback state, do NOT deduct regeneration count
+        const rollbackUpdates: Partial<Project> = {
+          status: previousCandidateUrls && previousCandidateUrls.length > 0
+            ? ProjectStatus.PREVIEW_READY
+            : previousStatus === ProjectStatus.COMPLETED
+              ? ProjectStatus.UPLOADED
+              : previousStatus,
+        };
+        if (previousCandidateUrls && previousCandidateUrls.length > 0) {
+          rollbackUpdates.candidateUrls = previousCandidateUrls;
+        }
+        await store.updateProject(id, rollbackUpdates);
       }
-
-      // Append to generation history
-      const updatedHistory = [...project.generationHistory, historyEntry];
-      (successUpdates as any).generationHistory = updatedHistory;
-
-      await store.updateProject(id, successUpdates);
     } else {
       // Technical failure: rollback state, do NOT deduct regeneration count
       const rollbackUpdates: Partial<Project> = {

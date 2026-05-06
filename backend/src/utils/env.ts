@@ -39,6 +39,9 @@ export const env = {
   GOOGLE_PLAY_PACKAGE_NAME: optionalEnv('GOOGLE_PLAY_PACKAGE_NAME', 'com.memorial.app'),
   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: optionalEnv('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64', ''),
 
+  // Image Generation
+  IMAGE_GENERATION_PROVIDER: optionalEnv('IMAGE_GENERATION_PROVIDER', 'mock'),
+
   // OpenAI
   OPENAI_API_KEY: optionalEnv('OPENAI_API_KEY', ''),
 
