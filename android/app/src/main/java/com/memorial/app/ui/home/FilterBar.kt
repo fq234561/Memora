@@ -24,6 +24,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -150,17 +151,15 @@ private fun FilterPill(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (selected) PrimaryGreen.copy(alpha = 0.12f) else CardSurface
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+    Surface(
+        onClick = onClick,
+        modifier = Modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) PrimaryGreen.copy(alpha = 0.12f) else CardSurface,
     ) {
         Text(
             text = label,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.bodySmall.copy(
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (selected) PrimaryGreen else TextSecondary

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.memorial.app.BuildConfig
 import coil.compose.rememberAsyncImagePainter
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.CardSurface
@@ -191,28 +192,31 @@ fun UploadPhotosScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Dev quick fill - subtle
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        viewModel.onBasePhotoSelected(
-                            android.net.Uri.parse("content://media/external/images/media/1000000050"),
-                            context
+            if (BuildConfig.ENABLE_MOCK_AUTH) {
+                // Dev quick fill - subtle
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            viewModel.onBasePhotoSelected(
+                                android.net.Uri.parse("file:///sdcard/Pictures/test_normal.jpg"),
+                                context
+                            )
+                            viewModel.onPersonPhotoSelected(
+                                android.net.Uri.parse("file:///sdcard/Pictures/test_living.jpg"),
+                                context
+                            )
+                        }
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Use test photos (Dev)",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted
                         )
-                        viewModel.onPersonPhotoSelected(
-                            android.net.Uri.parse("content://media/external/images/media/1000000051"),
-                            context
-                        )
-                    }
-                    .padding(vertical = 4.dp)
-            ) {
-                Text(
-                    text = "Use test photos (Dev)",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextMuted
                     )
-                )
+                }
             }
 
             // Photo slots

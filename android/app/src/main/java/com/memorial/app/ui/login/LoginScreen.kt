@@ -106,7 +106,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Reunite in a photo with those you miss",
+                text = "Complete meaningful family photos from precious moments",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = TextSecondary
                 ),

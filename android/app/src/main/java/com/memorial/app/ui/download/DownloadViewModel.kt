@@ -125,7 +125,7 @@ class DownloadViewModel(
 
     private fun saveImageToGallery(context: Context, bytes: ByteArray): Uri? {
         val contentResolver = context.contentResolver
-        val fileName = "memorial_${System.currentTimeMillis()}.jpg"
+        val fileName = "memora_family_${System.currentTimeMillis()}.jpg"
 
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)

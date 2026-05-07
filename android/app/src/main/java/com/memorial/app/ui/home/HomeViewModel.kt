@@ -112,8 +112,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         return Project(
             id = id,
             title = title,
-            style = com.memorial.app.data.model.PhotoStyle.valueOf(style),
-            status = com.memorial.app.data.model.ProjectStatus.valueOf(status),
+            style = parseEnum(style, com.memorial.app.data.model.PhotoStyle.NATURAL_FAMILY),
+            status = parseEnum(status, com.memorial.app.data.model.ProjectStatus.DRAFT),
             createdAt = createdAt,
             updatedAt = updatedAt,
             generatedPhotoUrl = generatedPhotoUrl,
@@ -128,5 +128,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             detectedTags = detectedTags,
             albumId = albumId
         )
+    }
+
+    private inline fun <reified T : Enum<T>> parseEnum(rawValue: String, fallback: T): T {
+        val normalized = rawValue.trim().uppercase()
+        return runCatching { enumValueOf<T>(normalized) }.getOrDefault(fallback)
     }
 }
