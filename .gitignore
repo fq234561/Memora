@@ -26,6 +26,12 @@ temp/
 .env.*
 !.env.example
 
+# Signing secrets
+*.jks
+*.keystore
+android/app/*.jks
+android/app/*.keystore
+
 # OS/editor
 .vscode/
 

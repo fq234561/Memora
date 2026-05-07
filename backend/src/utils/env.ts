@@ -36,7 +36,7 @@ export const env = {
 
   // Google
   GOOGLE_CLIENT_ID: optionalEnv('GOOGLE_CLIENT_ID', ''),
-  GOOGLE_PLAY_PACKAGE_NAME: optionalEnv('GOOGLE_PLAY_PACKAGE_NAME', 'com.memorial.app'),
+  GOOGLE_PLAY_PACKAGE_NAME: optionalEnv('GOOGLE_PLAY_PACKAGE_NAME', 'com.memora.app'),
   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: optionalEnv('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64', ''),
 
   // Image Generation

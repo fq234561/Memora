@@ -3,12 +3,23 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val memoraReleaseKeystore = System.getenv("MEMORA_RELEASE_KEYSTORE")
+val memoraReleaseKeystorePassword = System.getenv("MEMORA_RELEASE_KEYSTORE_PASSWORD")
+val memoraReleaseKeyAlias = System.getenv("MEMORA_RELEASE_KEY_ALIAS")
+val memoraReleaseKeyPassword = System.getenv("MEMORA_RELEASE_KEY_PASSWORD")
+val hasMemoraReleaseSigning = listOf(
+    memoraReleaseKeystore,
+    memoraReleaseKeystorePassword,
+    memoraReleaseKeyAlias,
+    memoraReleaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.memorial.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.memorial.app"
+        applicationId = "com.memora.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -20,6 +31,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasMemoraReleaseSigning) {
+            create("release") {
+                storeFile = file(memoraReleaseKeystore!!)
+                storePassword = memoraReleaseKeystorePassword
+                keyAlias = memoraReleaseKeyAlias
+                keyPassword = memoraReleaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "true")
@@ -28,6 +50,9 @@ android {
         }
         release {
             isMinifyEnabled = false
+            if (hasMemoraReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "false")
             buildConfigField("String", "API_BASE_URL", "\"https://memora-production-8d49.up.railway.app/\"")
             buildConfigField("String", "LOG_LEVEL", "\"NONE\"")
