@@ -84,7 +84,7 @@ Create a Web application OAuth client and copy its Client ID.
 Use the Web Client ID in:
 
 - Railway: `GOOGLE_CLIENT_ID=<web-client-id>`
-- Android future config: `GOOGLE_WEB_CLIENT_ID=<web-client-id>`
+- Android: `GOOGLE_WEB_CLIENT_ID=<web-client-id>`
 
 The backend verifies Google ID tokens with `GOOGLE_CLIENT_ID`, so this must be the Web Client ID, not the Android Client ID.
 

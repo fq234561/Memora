@@ -25,17 +25,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.memorial.app.BuildConfig
 import com.memorial.app.ui.theme.BackgroundWarm
 import com.memorial.app.ui.theme.PrimaryGreen
@@ -44,6 +54,7 @@ import com.memorial.app.ui.theme.PrimaryGreenLight
 import com.memorial.app.ui.theme.TextMuted
 import com.memorial.app.ui.theme.TextPrimary
 import com.memorial.app.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -51,10 +62,53 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(uiState) {
         if (uiState is LoginViewModel.LoginUiState.Success) {
             onLoginSuccess()
+        }
+    }
+
+    fun launchGoogleSignIn() {
+        scope.launch {
+            try {
+                val credentialManager = CredentialManager.create(context)
+
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest(
+                    credentialOptions = listOf(googleIdOption)
+                )
+
+                val result = credentialManager.getCredential(
+                    request = request,
+                    context = context
+                )
+
+                val credential = result.credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    viewModel.signInWithGoogle(googleIdTokenCredential.idToken)
+                } else {
+                    viewModel.showGoogleSignInError("Google Sign-In returned an unsupported credential.")
+                }
+            } catch (e: GetCredentialCancellationException) {
+                // User cancelled; remain idle
+            } catch (e: NoCredentialException) {
+                viewModel.showGoogleSignInError("No Google account is available on this device.")
+            } catch (e: GoogleIdTokenParsingException) {
+                viewModel.showGoogleSignInError("Google Sign-In response could not be read.")
+            } catch (e: Exception) {
+                viewModel.showGoogleSignInError("Google Sign-In is unavailable. Please try again.")
+            }
         }
     }
 
@@ -133,7 +187,7 @@ fun LoginScreen(
 
                 else -> {
                     Button(
-                        onClick = { viewModel.signInWithGoogle() },
+                        onClick = { launchGoogleSignIn() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),

@@ -47,6 +47,7 @@ android {
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "true")
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
             buildConfigField("String", "LOG_LEVEL", "\"BODY\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"331556040856-n2lilh91vbcjprdic1u9qblsbn5voa9q.apps.googleusercontent.com\"")
         }
         release {
             isMinifyEnabled = false
@@ -56,6 +57,7 @@ android {
             buildConfigField("boolean", "ENABLE_MOCK_AUTH", "false")
             buildConfigField("String", "API_BASE_URL", "\"https://memora-production-8d49.up.railway.app/\"")
             buildConfigField("String", "LOG_LEVEL", "\"NONE\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"331556040856-n2lilh91vbcjprdic1u9qblsbn5voa9q.apps.googleusercontent.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -103,6 +105,11 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Credential Manager & Google Sign-In
+    implementation("androidx.credentials:credentials:1.2.2")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.2")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

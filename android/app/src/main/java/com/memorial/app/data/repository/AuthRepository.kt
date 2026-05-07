@@ -34,8 +34,16 @@ class AuthRepository(private val tokenManager: TokenManager) {
 
     fun isLoggedIn(): Boolean = tokenManager.isLoggedIn
 
-    fun logout() {
+    suspend fun logout(context: android.content.Context) {
         tokenManager.clear()
+        try {
+            val credentialManager = androidx.credentials.CredentialManager.create(context)
+            credentialManager.clearCredentialState(
+                androidx.credentials.ClearCredentialStateRequest()
+            )
+        } catch (_: Exception) {
+            // Ignore errors from credential clearing
+        }
     }
 
     fun getUserName(): String = tokenManager.userName ?: "User"

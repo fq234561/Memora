@@ -33,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,10 +58,19 @@ import com.memorial.app.ui.theme.TextSecondary
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onSignOut: () -> Unit,
     viewModel: SettingsViewModel = viewModel()
 ) {
     val userEmail by viewModel.userEmail.collectAsState()
+    val signOutEvent by viewModel.signOutEvent.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(signOutEvent) {
+        if (signOutEvent) {
+            viewModel.onSignOutEventConsumed()
+            onSignOut()
+        }
+    }
 
     Scaffold(
         containerColor = BackgroundWarm
