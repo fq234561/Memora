@@ -5,9 +5,9 @@ This document is the release identity checklist for the international Android ap
 ## Current Decisions
 
 - App name: `Memora`
-- Google Play package name: `com.memora.app`
+- Google Play package name: `com.memora.familyphotos`
 - Android source namespace: `com.memorial.app`
-- Backend Google Play package env: `GOOGLE_PLAY_PACKAGE_NAME=com.memora.app`
+- Backend Google Play package env: `GOOGLE_PLAY_PACKAGE_NAME=com.memora.familyphotos`
 
 The Android `applicationId` is the public package name used by Google Play, Google OAuth Android clients, and Google Play Billing. The Kotlin source namespace can be migrated later if needed, but it does not block Play release identity.
 
@@ -73,7 +73,7 @@ Create both OAuth clients in the same Google Cloud project.
 
 Use:
 
-- Package name: `com.memora.app`
+- Package name: `com.memora.familyphotos`
 - SHA-1: debug SHA-1 for local/dev testing
 - SHA-1: release SHA-1 for production builds
 
@@ -96,7 +96,7 @@ Required before real Google Sign-In testing:
 USE_MOCK_AUTH=false
 GOOGLE_CLIENT_ID=<web-client-id>
 JWT_SECRET=<strong-random-secret>
-GOOGLE_PLAY_PACKAGE_NAME=com.memora.app
+GOOGLE_PLAY_PACKAGE_NAME=com.memora.familyphotos
 ```
 
 Required before real Google Play Billing verification:
@@ -110,13 +110,13 @@ GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64=<base64-service-account-json>
 The Play Console app must use package name:
 
 ```text
-com.memora.app
+com.memora.familyphotos
 ```
 
 The backend must verify purchases against:
 
 ```env
-GOOGLE_PLAY_PACKAGE_NAME=com.memora.app
+GOOGLE_PLAY_PACKAGE_NAME=com.memora.familyphotos
 ```
 
 ## Next Implementation Steps
