@@ -95,6 +95,7 @@ export default function PreviewPage() {
       await generatePreview(projectId, undefined, isRegeneration, regenNote || undefined);
       setRegenNote('');
       setShowRegen(false);
+      await load(); // Refresh project state to trigger polling
     } catch (e: unknown) {
       setError(extractApiError(e) || 'Generation failed.');
       setGenerating(false);
