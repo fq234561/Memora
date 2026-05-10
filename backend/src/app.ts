@@ -15,6 +15,7 @@ import contactRoutes from './routes/contact';
 import healthRoutes from './routes/health';
 import promptRoutes from './routes/prompts';
 import albumRoutes from './routes/albums';
+import stripeRoutes, { stripeWebhookHandler } from './routes/stripe';
 
 export function createApp(): Application {
   const app = express();
@@ -29,6 +30,9 @@ export function createApp(): Application {
   // Logging
   app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
+  // Stripe webhook needs raw body BEFORE express.json()
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler);
+
   // Body parsing
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -41,6 +45,7 @@ export function createApp(): Application {
   app.use('/api/health', healthRoutes);
   app.use('/api/prompts', promptRoutes);
   app.use('/api/albums', albumRoutes);
+  app.use('/api/stripe', stripeRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {

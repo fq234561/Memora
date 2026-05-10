@@ -114,29 +114,35 @@ router.post('/verify', async (req: Request, res: Response) => {
 
   let isValid: boolean;
 
-  // Try Google Play Developer API first
-  const googlePlayResult = await verifyGooglePlayPurchase(
-    env.GOOGLE_PLAY_PACKAGE_NAME,
-    purchase.productId,
-    purchase.purchaseToken
-  );
-
-  if (googlePlayResult.error && googlePlayResult.error.includes('not configured')) {
-    // Fallback: strong mock validation
-    console.warn('[purchases] Google Play API not configured. Using strong mock validation.');
-    isValid = strongMockValidation(purchase.purchaseToken);
-  } else if (googlePlayResult.error) {
-    // Google Play API error
-    console.error('[purchases] Google Play verification error:', googlePlayResult.error);
-    isValid = false;
+  // Stripe purchases are handled by webhook; skip Google Play verification
+  if (purchase.purchaseToken.startsWith('cs_')) {
+    console.log('[purchases] Stripe purchase detected, skipping Google Play verification');
+    isValid = true;
   } else {
-    // Google Play API success
-    isValid = googlePlayResult.valid && googlePlayResult.purchaseState === 1;
-    if (!isValid) {
-      console.warn('[purchases] Google Play purchase invalid:', {
-        purchaseState: googlePlayResult.purchaseState,
-        productId: googlePlayResult.productId,
-      });
+    // Try Google Play Developer API first
+    const googlePlayResult = await verifyGooglePlayPurchase(
+      env.GOOGLE_PLAY_PACKAGE_NAME,
+      purchase.productId,
+      purchase.purchaseToken
+    );
+
+    if (googlePlayResult.error && googlePlayResult.error.includes('not configured')) {
+      // Fallback: strong mock validation
+      console.warn('[purchases] Google Play API not configured. Using strong mock validation.');
+      isValid = strongMockValidation(purchase.purchaseToken);
+    } else if (googlePlayResult.error) {
+      // Google Play API error
+      console.error('[purchases] Google Play verification error:', googlePlayResult.error);
+      isValid = false;
+    } else {
+      // Google Play API success
+      isValid = googlePlayResult.valid && googlePlayResult.purchaseState === 1;
+      if (!isValid) {
+        console.warn('[purchases] Google Play purchase invalid:', {
+          purchaseState: googlePlayResult.purchaseState,
+          productId: googlePlayResult.productId,
+        });
+      }
     }
   }
 

@@ -10,8 +10,9 @@ import {
   GenerationHistoryEntry,
 } from '../models/types';
 import { store } from '../services/store';
-import { uploadFile, getSignedDownloadUrl } from '../services/storage';
+import { uploadFile, getSignedDownloadUrl, deleteFile } from '../services/storage';
 import { imageGeneration } from '../services/imageGeneration';
+import { trackEvent } from '../services/analytics';
 import { AppError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
 import { validateBody } from '../middleware/validator';
@@ -70,6 +71,26 @@ async function resolveProjectUrls(project: Project): Promise<Project> {
   };
 }
 
+// Helper: clean up R2 storage keys for a project
+async function cleanupProjectStorage(project: Project): Promise<void> {
+  const keys: (string | undefined)[] = [
+    project.basePhotoUrl,
+    project.personPhotoUrl,
+    project.generatedPhotoUrl,
+    project.hdPhotoUrl,
+    ...(project.candidateUrls || []),
+  ];
+  for (const key of keys) {
+    if (key && !key.startsWith('http')) {
+      try {
+        await deleteFile(key);
+      } catch (e) {
+        console.error('[projects] Failed to delete storage key:', key, e);
+      }
+    }
+  }
+}
+
 // POST /api/projects - Create a new project
 router.post('/', validateBody(['title', 'style']), async (req: Request, res: Response) => {
   const { title, style, eventDate, activityType, personTypes } = req.body as CreateProjectRequest;
@@ -93,6 +114,7 @@ router.post('/', validateBody(['title', 'style']), async (req: Request, res: Res
   };
 
   await store.createProject(project);
+  await trackEvent({ eventName: 'project_created', userId, projectId: project.id });
 
   const response: ApiResponse<Project> = {
     success: true,
@@ -206,6 +228,8 @@ router.post('/:id/upload', upload.single('photo'), async (req: Request, res: Res
 
   const updatedProject = await store.getProject(id);
 
+  await trackEvent({ eventName: 'photos_uploaded', userId, projectId: id });
+
   const response: ApiResponse<{ project: Project }> = {
     success: true,
     data: {
@@ -262,6 +286,8 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
     }
   }
 
+  await trackEvent({ eventName: 'generation_started', userId, projectId: id });
+
   // Save previous state for rollback on failure
   const previousStatus = project.status;
   const previousCandidateUrls = project.candidateUrls;
@@ -315,6 +341,7 @@ router.post('/:id/generate', async (req: Request, res: Response) => {
         (successUpdates as any).generationHistory = updatedHistory;
 
         await store.updateProject(id, successUpdates);
+        await trackEvent({ eventName: 'preview_ready', userId, projectId: id });
       } catch (err) {
         console.error('[projects] Image generation provider failed:', err);
         // Technical failure: rollback state, do NOT deduct regeneration count
@@ -392,6 +419,7 @@ router.post('/:id/select-candidate', validateBody(['index']), async (req: Reques
   }
 
   await store.updateProject(id, updates);
+  await trackEvent({ eventName: 'candidate_selected', userId, projectId: id, metadata: { selectedIndex: index } });
 
   const updatedProject = await store.getProject(id);
 
@@ -454,6 +482,7 @@ router.post('/:id/consent', async (req: Request, res: Response) => {
   }
 
   await store.updateProject(id, { consentGiven: true });
+  await trackEvent({ eventName: 'consent_given', userId, projectId: id });
 
   const updatedProject = await store.getProject(id);
 
@@ -478,6 +507,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     throw new AppError(403, 'Access denied');
   }
 
+  await cleanupProjectStorage(project);
   await store.deleteProject(id);
 
   const response: ApiResponse = {

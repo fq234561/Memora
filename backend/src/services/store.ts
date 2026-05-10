@@ -223,11 +223,14 @@ class PostgresStore {
   async createPurchase(purchase: Purchase): Promise<Purchase> {
     const db = getPool();
     await db.query(
-      `INSERT INTO purchases (id, project_id, user_id, product_id, purchase_token, status, verified_at, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO purchases (id, project_id, user_id, product_id, purchase_token, status, verified_at, created_at, provider, stripe_session_id, stripe_payment_intent_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT(id) DO UPDATE SET
          status = excluded.status,
-         verified_at = excluded.verified_at`,
+         verified_at = excluded.verified_at,
+         provider = excluded.provider,
+         stripe_session_id = excluded.stripe_session_id,
+         stripe_payment_intent_id = excluded.stripe_payment_intent_id`,
       [
         purchase.id,
         purchase.projectId,
@@ -237,6 +240,9 @@ class PostgresStore {
         purchase.status,
         purchase.verifiedAt || null,
         purchase.createdAt,
+        purchase.provider || 'google_play',
+        purchase.stripeSessionId || null,
+        purchase.stripePaymentIntentId || null,
       ]
     );
     return purchase;
@@ -439,6 +445,9 @@ class PostgresStore {
       productId: row.product_id,
       purchaseToken: row.purchase_token,
       status: row.status as PurchaseStatus,
+      provider: row.provider || 'google_play',
+      stripeSessionId: row.stripe_session_id || undefined,
+      stripePaymentIntentId: row.stripe_payment_intent_id || undefined,
       verifiedAt: row.verified_at || undefined,
       createdAt: row.created_at,
     };

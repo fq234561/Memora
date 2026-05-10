@@ -79,6 +79,11 @@ export async function initDatabase(): Promise<void> {
     )
   `);
 
+  // Migration: extend purchases for Stripe
+  await db.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'google_play'`);
+  await db.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS stripe_session_id TEXT`);
+  await db.query(`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS stripe_payment_intent_id TEXT`);
+
   // Generation history table
   await db.query(`
     CREATE TABLE IF NOT EXISTS generation_history (
@@ -121,6 +126,19 @@ export async function initDatabase(): Promise<void> {
     )
   `);
 
+  // Events / analytics table
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      anonymous_id TEXT,
+      project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+      event_name TEXT NOT NULL,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
   // Indexes
   await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`);
@@ -132,6 +150,10 @@ export async function initDatabase(): Promise<void> {
   await db.query(`CREATE INDEX IF NOT EXISTS idx_albums_user ON albums(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_user ON contact_messages(user_id)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_contact_type ON contact_messages(type)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_events_project ON events(project_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_events_name ON events(event_name)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at)`);
 }
 
 export async function closeDatabase(): Promise<void> {

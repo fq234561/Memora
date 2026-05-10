@@ -163,3 +163,137 @@ cd android
 ## Trust and Safety
 
 Memora is a private family memory tool. Outputs should be labeled as AI-generated. The product must not support public-figure impersonation, deceptive historical claims, unauthorized real-person use, public galleries, voice cloning, chatbots, talking portraits, or full-body reenactment.
+
+---
+
+## Web MVP (New)
+
+A Next.js web frontend has been added under `web/` for US-market validation. It replicates the core Android flow and connects to the same Express backend.
+
+### Web Tech Stack
+- **Framework**: Next.js 16 + React 19 + TypeScript
+- **Router**: App Router
+- **Styling**: Tailwind CSS v4
+- **HTTP Client**: Axios
+- **Auth**: Google Identity Services (One Tap)
+- **Payments**: Stripe Checkout
+
+### Environment Variables
+
+#### Backend (`backend/.env`)
+```bash
+# Existing
+PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
+GOOGLE_CLIENT_ID=...         # Web OAuth Client ID (not Android)
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Storage (R2)
+STORAGE_ENDPOINT=...
+STORAGE_BUCKET=memora-uploads
+STORAGE_ACCESS_KEY_ID=...
+STORAGE_SECRET_ACCESS_KEY=...
+STORAGE_PUBLIC_DOMAIN=https://images.yourdomain.com
+
+# AI Generation
+IMAGE_GENERATION_PROVIDER=mock   # or 'openai' for real generation
+OPENAI_API_KEY=sk-...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_PREVIEW_PACK=price_...
+STRIPE_PRICE_HD_UNLOCK=price_...
+STRIPE_PRICE_FULL_PACK=price_...
+
+# Web App URL (for Stripe success/cancel redirects)
+WEB_APP_URL=http://localhost:3000
+```
+
+#### Web (`web/.env.local`)
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_web_client_id
+```
+
+### Local Development
+
+1. **Start Backend**
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your credentials
+   npm install
+   npm run dev        # Runs on http://localhost:3000
+   ```
+
+2. **Start Web Frontend**
+   ```bash
+   cd web
+   cp .env.local .env.local
+   # Edit .env.local with your credentials
+   npm install
+   npm run dev        # Runs on http://localhost:3000 (or 3001 if backend uses 3000)
+   ```
+   Note: If both try to use port 3000, change the web port with `npm run dev -- -p 3001`.
+
+3. **Test Stripe Webhooks Locally**
+   ```bash
+   # Install Stripe CLI (https://stripe.com/docs/stripe-cli)
+   stripe login
+   stripe listen --forward-to http://localhost:3000/api/stripe/webhook
+   ```
+   Copy the `whsec_...` signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+   Then trigger a test event:
+   ```bash
+   stripe trigger checkout.session.completed
+   ```
+
+### Full Local Test Path
+
+1. Open `http://localhost:3000` (web)
+2. Sign in with Google (or use `USE_MOCK_AUTH=true` with any long token)
+3. Create a project (`/` → "New Project")
+4. Upload two photos (`/upload/{projectId}`)
+5. Confirm consent (`/consent/{projectId}`)
+6. Purchase Preview Pack via Stripe Checkout (use test card `4242 4242 4242 4242`)
+7. Return to preview page — webhook grants entitlement
+8. Generate preview (`/preview/{projectId}`)
+9. Select a candidate
+10. Purchase HD Unlock or Full Pack
+11. Download result (`/download/{projectId}`)
+
+### Deployment (Railway + Vercel)
+
+#### Backend (Railway)
+1. Push repo to GitHub
+2. Connect Railway to the `backend/` folder (or root with Dockerfile)
+3. Set all environment variables in Railway dashboard
+4. Add custom domain: `api.yourdomain.com`
+5. Ensure `WEB_APP_URL` points to your production web domain
+
+#### Web Frontend (Vercel)
+1. Connect Vercel to the `web/` folder
+2. Set environment variables:
+   - `NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com`
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID=...`
+3. Add custom domain: `yourdomain.com`
+4. Update backend `ALLOWED_ORIGINS` to include the production web domain
+
+#### Stripe Production
+1. Switch to Stripe Live mode
+2. Create live prices for preview_pack, hd_unlock, full_pack
+3. Update `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and price IDs in Railway
+4. Register webhook endpoint: `https://api.yourdomain.com/api/stripe/webhook`
+5. Select event: `checkout.session.completed`
+
+### Security Notes
+- Never commit real API keys. Use `.env` files and Railway/Vercel secrets.
+- Stripe webhook verifies `Stripe-Signature` with raw body.
+- Webhook fulfillment is idempotent (duplicate events do not re-grant entitlements).
+- All project/payment endpoints require JWT auth and project ownership checks.
+- OpenAI API key is server-side only; frontend never sees it.
+- `IMAGE_GENERATION_PROVIDER=mock` is safe for testing. In production with `openai`, a missing `OPENAI_API_KEY` will throw an error instead of silently falling back to mock.

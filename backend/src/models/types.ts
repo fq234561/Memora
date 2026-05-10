@@ -71,6 +71,9 @@ export interface Purchase {
   productId: string;
   purchaseToken: string;
   status: PurchaseStatus;
+  provider?: 'google_play' | 'stripe';
+  stripeSessionId?: string;
+  stripePaymentIntentId?: string;
   verifiedAt?: string;
   createdAt: string;
 }
@@ -173,3 +176,27 @@ export interface CreateAlbumRequest {
   title: string;
   projectIds: string[];
 }
+
+// Analytics events
+export interface AnalyticsEvent {
+  id: string;
+  userId?: string;
+  anonymousId?: string;
+  projectId?: string;
+  eventName: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type FunnelEventName =
+  | 'visit'
+  | 'login'
+  | 'project_created'
+  | 'photos_uploaded'
+  | 'consent_given'
+  | 'generation_started'
+  | 'preview_ready'
+  | 'candidate_selected'
+  | 'checkout_started'
+  | 'payment_completed'
+  | 'download_clicked';

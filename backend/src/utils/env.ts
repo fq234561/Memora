@@ -45,6 +45,16 @@ export const env = {
   // OpenAI
   OPENAI_API_KEY: optionalEnv('OPENAI_API_KEY', ''),
 
+  // Stripe
+  STRIPE_SECRET_KEY: optionalEnv('STRIPE_SECRET_KEY', ''),
+  STRIPE_WEBHOOK_SECRET: optionalEnv('STRIPE_WEBHOOK_SECRET', ''),
+  STRIPE_PRICE_PREVIEW_PACK: optionalEnv('STRIPE_PRICE_PREVIEW_PACK', ''),
+  STRIPE_PRICE_HD_UNLOCK: optionalEnv('STRIPE_PRICE_HD_UNLOCK', ''),
+  STRIPE_PRICE_FULL_PACK: optionalEnv('STRIPE_PRICE_FULL_PACK', ''),
+
+  // Web App URL (for Stripe success/cancel URLs)
+  WEB_APP_URL: optionalEnv('WEB_APP_URL', 'http://localhost:3000'),
+
   // Sentry
   SENTRY_DSN: optionalEnv('SENTRY_DSN', ''),
   SENTRY_ENVIRONMENT: optionalEnv('SENTRY_ENVIRONMENT', optionalEnv('NODE_ENV', 'development')),
